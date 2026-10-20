@@ -4,6 +4,8 @@ A bring-your-own-key (BYOK) multimodal generation studio built with Next.js 16 (
 
 Add your own provider API keys, assign models to studio categories, and generate text, images, video, music, and sandboxed live website artifacts from one unified interface.
 
+![Poly-AI Walkthrough](docs/evidence/phase-7/walkthrough.gif)
+
 ---
 
 ## Features
@@ -68,6 +70,9 @@ Visit Poly-AI and create an account via `/sign-up`. Authentication is managed th
 
 ### 2. Connect Your Providers
 Navigate to **Settings → Providers & Models** (`/settings/providers`):
+
+![Provider & Model Management](docs/evidence/phase-7/settings-providers.png)
+
 1. Click **Add Provider**.
 2. Select a known provider preset (e.g. OpenAI, Anthropic, Google, fal.ai, Replicate) or select **Custom OpenAI-compatible** for self-hosted / gateway endpoints (Ollama, vLLM, OpenRouter).
 3. Paste your personal API key.
@@ -79,6 +84,11 @@ In the **Model Assignment Table**:
 2. Select your verified provider and choose from detected models supported by the provider.
 3. Capability gating ensures models can only be assigned to categories matching their `modalities.output` capabilities.
 4. Set your default model for each category.
+
+### 4. Interactive Studios & Keyboard Navigation
+Switch between studio categories in the sidebar or trigger global shortcuts (`?` for cheat-sheet, `⌘B` for sidebar):
+
+![Keyboard Shortcuts & Navigation](docs/evidence/phase-7/shortcuts-dialog.png)
 
 ---
 
