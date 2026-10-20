@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { EmptyIllustration } from "@/components/app/empty-illustration";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -20,6 +21,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export interface GenerationRecord {
 	id: string;
@@ -98,11 +100,25 @@ export function ImageGallery({
 				</Button>
 			</div>
 
-			{generations.length === 0 ? (
+			{loading && generations.length === 0 ? (
+				<div
+					className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+					data-slot="gallery-skeletons"
+				>
+					{[1, 2, 3, 4].map((i) => (
+						<div
+							key={i}
+							className="flex flex-col gap-2 rounded-xl border p-2 bg-card"
+						>
+							<Skeleton className="aspect-square w-full rounded-lg" />
+							<Skeleton className="h-4 w-3/4 mt-1" />
+							<Skeleton className="h-3 w-1/2" />
+						</div>
+					))}
+				</div>
+			) : generations.length === 0 ? (
 				<div className="flex min-h-[280px] flex-col items-center justify-center rounded-xl border border-dashed p-8 text-center bg-muted/20">
-					<div className="flex size-12 items-center justify-center rounded-full bg-muted mb-3">
-						<ImageIcon className="size-6 text-muted-foreground" />
-					</div>
+					<EmptyIllustration kind="image" size="lg" className="mb-4" />
 					<h3 className="text-base font-semibold">No images generated yet</h3>
 					<p className="text-sm text-muted-foreground max-w-sm mt-1">
 						Type a prompt above and click Generate to create your first image
