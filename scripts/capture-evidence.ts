@@ -23,7 +23,7 @@ import { chromium } from "@playwright/test";
 
 const run = promisify(execFile);
 
-const PHASE = process.env.EVIDENCE_PHASE ?? "0";
+const PHASE = process.env.EVIDENCE_PHASE ?? "3";
 const BASE_URL = process.env.EVIDENCE_BASE_URL ?? "http://127.0.0.1:3000";
 const OUT_DIR = path.resolve(
 	process.cwd(),
@@ -225,6 +225,96 @@ async function main() {
 			await page.keyboard.press("Escape");
 			await page.waitForTimeout(200);
 		}
+	} else if (PHASE === "3") {
+		const urlObj = new URL(BASE_URL);
+
+		// Mock route responses for models to avoid 401s in mock session evidence capture
+		await page.route("**/api/models*", async (route) => {
+			if (route.request().method() === "GET") {
+				await route.fulfill({
+					status: 200,
+					contentType: "application/json",
+					body: JSON.stringify({ models: [] }),
+				});
+			} else {
+				await route.continue();
+			}
+		});
+
+		// Mock auth session to populate user profile in sidebar and prevent CORS errors
+		await page.route("**/api/auth/**", async (route) => {
+			await route.fulfill({
+				status: 200,
+				headers: {
+					"access-control-allow-origin": "http://127.0.0.1:3000",
+					"access-control-allow-credentials": "true",
+					"content-type": "application/json",
+				},
+				body: JSON.stringify({
+					session: {
+						id: "mock-session-id",
+						userId: "mock-user-id",
+						expiresAt: new Date(Date.now() + 86400000).toISOString(),
+					},
+					user: {
+						id: "mock-user-id",
+						name: "Demo User",
+						email: "demo@poly-ai.app",
+					},
+				}),
+			});
+		});
+
+		// Add session cookie to access /app routes
+		await context.addCookies([
+			{
+				name: "better-auth.session_token",
+				value: "mock-session-token-evidence",
+				domain: urlObj.hostname,
+				path: "/",
+				httpOnly: true,
+				sameSite: "Lax",
+			},
+		]);
+
+		// Visit /app/text
+		await page.goto(`${BASE_URL}/app/text`, {
+			waitUntil: "networkidle",
+		});
+		await page.waitForTimeout(600);
+
+		// 1. App shell on /app/text
+		await shoot("app-shell");
+		await shoot("app-shell-text");
+
+		// 2. Category empty state card screenshot
+		const emptyCard = page
+			.locator("[data-slot='category-empty-state']")
+			.first();
+		if (await emptyCard.count()) {
+			const cardFile = path.join(OUT_DIR, "category-empty-state.png");
+			await emptyCard.screenshot({ path: cardFile });
+			captured.push("category-empty-state.png");
+			console.log("  captured category-empty-state.png");
+		}
+
+		// 3. Toggle sidebar collapsed state and capture
+		const trigger = page.locator("[data-sidebar='trigger']").first();
+		if (await trigger.count()) {
+			await trigger.click();
+			await page.waitForTimeout(400);
+			await shoot("app-shell-collapsed");
+			// Restore expanded
+			await trigger.click();
+			await page.waitForTimeout(400);
+		}
+
+		// 4. Navigate to /app/website and capture
+		await page.goto(`${BASE_URL}/app/website`, {
+			waitUntil: "networkidle",
+		});
+		await page.waitForTimeout(600);
+		await shoot("app-shell-website");
 	}
 	const video = page.video();
 	await context.close();

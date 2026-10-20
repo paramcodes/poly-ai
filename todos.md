@@ -5,8 +5,8 @@
 
 ## Current phase
 
-**Phase 2 — Catalogue and providers** · status: in progress
-Branch: `phase/2-catalogue-and-providers` · PR: not yet opened
+**Phase 3 — App shell and categories** · status: complete
+Branch: `phase/3-app-shell-and-categories` · PR: not yet opened
 
 ## Legend
 
@@ -58,11 +58,11 @@ Branch: `phase/2-catalogue-and-providers` · PR: not yet opened
 - [x] Provider verification probe
 ## Phase 3 — App shell and categories
 
-- [ ] Collapsible sidebar, state persisted
-- [ ] Category routes `/app/[category]`
-- [ ] Model picker
-- [ ] Empty-state toast contract — amber for "not configured", red for "failed"
-- [ ] `src/lib/toast.ts` + `notifyCategoryEmpty` with unit tests
+- [x] Collapsible sidebar, state persisted
+- [x] Category routes `/app/[category]`
+- [x] Model picker
+- [x] Empty-state toast contract — amber for "not configured", red for "failed"
+- [x] `src/lib/toast.ts` + `notifyCategoryEmpty` with unit tests
 
 ## Phase 4 — Text and website streaming
 
