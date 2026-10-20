@@ -12,6 +12,7 @@ import type * as React from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CategoryEmptyState } from "@/components/app/category-empty-state";
 import { ModelPicker } from "@/components/app/model-picker";
+import { TextWorkspace } from "@/components/app/text-workspace";
 import type { AssignedModel } from "@/components/settings/models-table";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -87,6 +88,13 @@ export function CategoryView({ category, initialModels }: CategoryViewProps) {
 		}
 		return activeModels[0]?.id ?? null;
 	}, [selectedModelId, activeModels]);
+	const selectedModel = useMemo(() => {
+		return (
+			activeModels.find((m) => m.id === effectiveSelectedModelId) ??
+			activeModels[0] ??
+			null
+		);
+	}, [activeModels, effectiveSelectedModelId]);
 
 	if (loading) {
 		return (
@@ -175,35 +183,39 @@ export function CategoryView({ category, initialModels }: CategoryViewProps) {
 				/>
 			</div>
 
-			<div className="flex flex-col gap-6">
-				<div className="flex flex-col gap-3">
-					<label htmlFor="prompt-input" className="text-sm font-medium">
-						Prompt
-					</label>
-					<Textarea
-						id="prompt-input"
-						placeholder={`Enter a prompt for ${meta.name.toLowerCase()} generation...`}
-						className="min-h-24 resize-none"
-					/>
-					<div className="flex justify-end">
-						<Button disabled={!effectiveSelectedModelId}>
-							<Sparkles className="size-4 mr-1.5" />
-							Generate
-						</Button>
+			{category === "text" && selectedModel ? (
+				<TextWorkspace selectedModel={selectedModel} />
+			) : (
+				<div className="flex flex-col gap-6">
+					<div className="flex flex-col gap-3">
+						<label htmlFor="prompt-input" className="text-sm font-medium">
+							Prompt
+						</label>
+						<Textarea
+							id="prompt-input"
+							placeholder={`Enter a prompt for ${meta.name.toLowerCase()} generation...`}
+							className="min-h-24 resize-none"
+						/>
+						<div className="flex justify-end">
+							<Button disabled={!effectiveSelectedModelId}>
+								<Sparkles className="size-4 mr-1.5" />
+								Generate
+							</Button>
+						</div>
 					</div>
-				</div>
 
-				<div className="flex min-h-[320px] flex-col items-center justify-center rounded-xl border border-dashed p-8 text-center bg-muted/20">
-					<div className="flex size-12 items-center justify-center rounded-full bg-muted mb-3">
-						<Icon className="size-6 text-muted-foreground" />
+					<div className="flex min-h-[320px] flex-col items-center justify-center rounded-xl border border-dashed p-8 text-center bg-muted/20">
+						<div className="flex size-12 items-center justify-center rounded-full bg-muted mb-3">
+							<Icon className="size-6 text-muted-foreground" />
+						</div>
+						<h3 className="text-base font-semibold">Ready to generate</h3>
+						<p className="text-sm text-muted-foreground max-w-sm mt-1">
+							Enter a prompt and select a model to create{" "}
+							{meta.name.toLowerCase()} content.
+						</p>
 					</div>
-					<h3 className="text-base font-semibold">Ready to generate</h3>
-					<p className="text-sm text-muted-foreground max-w-sm mt-1">
-						Enter a prompt and select a model to create{" "}
-						{meta.name.toLowerCase()} content.
-					</p>
 				</div>
-			</div>
+			)}
 		</div>
 	);
 }
