@@ -49,6 +49,10 @@ export function CategoryView({ category, initialModels }: CategoryViewProps) {
 		try {
 			const res = await fetch(`/api/models?category=${category}`);
 			if (!res.ok) {
+				if (res.status === 401) {
+					setModels([]);
+					return;
+				}
 				throw new Error(`Failed to load models (${res.status})`);
 			}
 			const data = (await res.json()) as { models?: AssignedModel[] };

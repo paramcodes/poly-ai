@@ -21,7 +21,7 @@ export function notifyCategoryEmpty(
 	const id = `empty-category-${category}`;
 
 	if (reason === "not-configured") {
-		return toast.warning(`No active ${categoryName} models`, {
+		return toast.warning(`No models configured for ${categoryName}`, {
 			id,
 			description: `No active models are configured for ${categoryName}. Configure a provider in Settings to get started.`,
 		});
