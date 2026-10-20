@@ -5,7 +5,7 @@
 
 ## Current phase
 
-**Phase 6 — Video and music** · status: in progress
+**Phase 6 — Video and music** · status: complete
 Branch: `phase/6-video-and-music` · PR: not yet opened
 
 ## Legend
@@ -92,7 +92,7 @@ Branch: `phase/6-video-and-music` · PR: not yet opened
 - [x] Video and music workspaces, polling every five seconds
 - [x] ADR-0012 — one adapter interface for asynchronous media jobs
 - [x] Feature docs — `docs/features/video.md`, `docs/features/music.md`
-- [~] End-to-end test and phase-6 evidence
+- [x] End-to-end test and phase-6 evidence
 
 ## Phase 7 — Polish and CI
 
