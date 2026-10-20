@@ -13,6 +13,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { CategoryEmptyState } from "@/components/app/category-empty-state";
 import { ModelPicker } from "@/components/app/model-picker";
 import { TextWorkspace } from "@/components/app/text-workspace";
+import { WebsiteWorkspace } from "@/components/app/website-workspace";
 import type { AssignedModel } from "@/components/settings/models-table";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -185,6 +186,8 @@ export function CategoryView({ category, initialModels }: CategoryViewProps) {
 
 			{category === "text" && selectedModel ? (
 				<TextWorkspace selectedModel={selectedModel} />
+			) : category === "website" && selectedModel ? (
+				<WebsiteWorkspace selectedModel={selectedModel} />
 			) : (
 				<div className="flex flex-col gap-6">
 					<div className="flex flex-col gap-3">
