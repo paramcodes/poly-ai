@@ -5,8 +5,8 @@
 
 ## Current phase
 
-**Phase 3 — App shell and categories** · status: complete
-Branch: `phase/3-app-shell-and-categories` · PR: not yet opened
+**Phase 4 — Text and website streaming** · status: complete
+Branch: `phase/4-text-and-website-streaming` · PR: not yet opened
 
 ## Legend
 
@@ -66,12 +66,12 @@ Branch: `phase/3-app-shell-and-categories` · PR: not yet opened
 
 ## Phase 4 — Text and website streaming
 
-- [ ] `POST /api/generate/text` and `/api/generate/website` — AI SDK data stream
-- [ ] `useChat` wiring with `prepareSendMessagesRequest`
-- [ ] Website route — `ResizablePanelGroup`, prompt pane beside preview pane
-- [ ] `src/lib/website/extract-html.ts` with unit tests
-- [ ] Sandboxed `iframe` preview with live streaming updates and device toggles
-- [ ] Code tab, copy, download
+- [x] `POST /api/generate/text` and `/api/generate/website` — AI SDK data stream
+- [x] `useChat` wiring with `prepareSendMessagesRequest`
+- [x] Website route — `ResizablePanelGroup`, prompt pane beside preview pane
+- [x] `src/lib/website/extract-html.ts` with unit tests
+- [x] Sandboxed `iframe` preview with live streaming updates and device toggles
+- [x] Code tab, copy, download
 
 ## Phase 5 — Image
 
@@ -115,8 +115,7 @@ Branch: `phase/3-app-shell-and-categories` · PR: not yet opened
   `generateVideo` in v7.
 - `@ai-sdk/openai-compatible` exposes no video model factory — video needs a
   dedicated adapter (fal / Replicate / Google).
-- `useChat` and the newer `Chat` class both exist in `@ai-sdk/react@^4`. Pick one
-  in Phase 4 and record it in ADR-0005.
+- `useChat` with `DefaultChatTransport` is chosen and adopted for all streaming in Phase 4 (ADR-0005).
 - There is no AI SDK music API. Songs need a fal.ai or Replicate queue adapter.
 - For the website allowlist, match the catalogue's real `family` tokens
   (`claude-sonnet`, `gpt-codex`, `qwen3.5`, …), not model-id substrings.
