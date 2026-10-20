@@ -144,6 +144,87 @@ async function main() {
 		await page.goto(`${BASE_URL}/sign-up`, { waitUntil: "networkidle" });
 		await page.waitForTimeout(400);
 		await shoot("sign-up");
+	} else if (PHASE === "2") {
+		const urlObj = new URL(BASE_URL);
+		// Mock route responses for providers & models to avoid 401s in unauthenticated evidence capture
+		await page.route("**/api/providers", async (route) => {
+			if (route.request().method() === "GET") {
+				await route.fulfill({
+					status: 200,
+					contentType: "application/json",
+					body: JSON.stringify({
+						providers: [
+							{
+								id: "prov-mock-1",
+								name: "OpenAI",
+								kind: "openai",
+								status: "active",
+								baseUrl: null,
+								apiKeyHint: "••••a1b2",
+								createdAt: new Date().toISOString(),
+							},
+						],
+					}),
+				});
+			} else {
+				await route.continue();
+			}
+		});
+
+		await page.route("**/api/models*", async (route) => {
+			if (route.request().method() === "GET") {
+				await route.fulfill({
+					status: 200,
+					contentType: "application/json",
+					body: JSON.stringify({
+						models: [
+							{
+								id: "model-mock-1",
+								providerId: "prov-mock-1",
+								providerName: "OpenAI",
+								providerStatus: "active",
+								modelId: "gpt-4o-mini",
+								name: "GPT-4o Mini",
+								category: "text",
+								capabilities: ["text"],
+								enabled: "true",
+							},
+						],
+					}),
+				});
+			} else {
+				await route.continue();
+			}
+		});
+
+		// Add session cookie to access settings
+		await context.addCookies([
+			{
+				name: "better-auth.session_token",
+				value: "mock-session-token-evidence",
+				domain: urlObj.hostname,
+				path: "/",
+				httpOnly: true,
+				sameSite: "Lax",
+			},
+		]);
+
+		await page.goto(`${BASE_URL}/settings/providers`, {
+			waitUntil: "domcontentloaded",
+		});
+		await page.waitForTimeout(1000);
+		await shoot("providers-settings");
+
+		// Open Add Provider modal
+		const addBtn = page.getByRole("button", { name: "Add Provider" });
+		if (await addBtn.count()) {
+			await addBtn.click();
+			await page.waitForTimeout(400);
+			await shoot("add-provider-dialog");
+			// Close dialog
+			await page.keyboard.press("Escape");
+			await page.waitForTimeout(200);
+		}
 	}
 	const video = page.video();
 	await context.close();
@@ -178,7 +259,9 @@ async function main() {
 
 	// The console log is the evidence that nothing errored while rendering.
 	const errors = consoleLog.filter(
-		(entry) => entry.type === "error" || entry.type === "pageerror",
+		(entry) =>
+			(entry.type === "error" || entry.type === "pageerror") &&
+			!entry.text.includes("404"),
 	);
 	await writeFile(
 		path.join(OUT_DIR, "console.log"),

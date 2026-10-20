@@ -5,8 +5,8 @@
 
 ## Current phase
 
-**Phase 1 — Data and auth** · status: in progress
-Branch: `phase/1-data-and-auth` · PR: not yet opened
+**Phase 2 — Catalogue and providers** · status: in progress
+Branch: `phase/2-catalogue-and-providers` · PR: not yet opened
 
 ## Legend
 
@@ -50,13 +50,12 @@ Branch: `phase/1-data-and-auth` · PR: not yet opened
 
 ## Phase 2 — Catalogue and providers
 
-- [ ] `GET /api/catalog` — models.dev proxy, 6 h cache, committed snapshot fallback
-- [ ] `src/lib/capabilities.ts` — `modalities.output` → category mapping
-- [ ] Provider CRUD with encrypted key storage
-- [ ] "Add provider" form — known-provider combo + custom OpenAI-compatible
-- [ ] Model assignment table with capability gating
-- [ ] Provider verification probe
-
+- [x] `GET /api/catalog` — models.dev proxy, 6 h cache, committed snapshot fallback
+- [x] `src/lib/capabilities.ts` — `modalities.output` → category mapping
+- [x] Provider CRUD with encrypted key storage
+- [x] "Add provider" form — known-provider combo + custom OpenAI-compatible
+- [x] Model assignment table with capability gating
+- [x] Provider verification probe
 ## Phase 3 — App shell and categories
 
 - [ ] Collapsible sidebar, state persisted
