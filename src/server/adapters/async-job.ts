@@ -1,4 +1,6 @@
 import type { ProviderKind } from "@/lib/db/schema";
+import { createFalJobAdapter } from "./fal";
+import { createReplicateJobAdapter } from "./replicate";
 
 export type AsyncJobState = "queued" | "running" | "succeeded" | "failed";
 
@@ -35,6 +37,20 @@ export interface AsyncJobAdapterOptions {
 	baseUrl?: string | null;
 	/** "video" | "music" — used to pick the mock placeholder asset. */
 	category?: "video" | "music";
+}
+
+/** Picks the adapter for a provider kind. `fal` → fal, `replicate` → replicate. */
+export function getAsyncJobAdapter(
+	kind: ProviderKind,
+	options: AsyncJobAdapterOptions,
+): AsyncJobAdapter {
+	if (kind === "fal") {
+		return createFalJobAdapter(options);
+	}
+	if (kind === "replicate") {
+		return createReplicateJobAdapter(options);
+	}
+	throw new Error(`No async job adapter for provider kind: ${kind}`);
 }
 
 /** Local / test keys must never reach the network. */
