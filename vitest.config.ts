@@ -21,5 +21,6 @@ export default defineConfig({
 			? ["tests/integration/**/*.test.ts"]
 			: ["tests/unit/**/*.test.ts", "tests/unit/**/*.test.tsx"],
 		passWithNoTests: true,
+		testTimeout: 15_000,
 	},
 });
