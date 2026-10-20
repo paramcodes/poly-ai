@@ -699,6 +699,230 @@ async function main() {
 			await page.waitForTimeout(300);
 			await shoot("image-prompt-filled");
 		}
+	} else if (PHASE === "6") {
+		const urlObj = new URL(BASE_URL);
+
+		// Mock the assigned video and music models
+		await page.route("**/api/models*", async (route) => {
+			if (route.request().method() === "GET") {
+				const isMusic = route.request().url().includes("category=music");
+				const models = isMusic
+					? [
+							{
+								id: "music-model-1",
+								modelId: "fal-ai/ace-music",
+								name: "ACE Music",
+								providerId: "fal-provider",
+								providerName: "fal",
+								providerStatus: "active",
+								category: "music",
+								enabled: "true",
+								capabilities: ["music"],
+							},
+						]
+					: [
+							{
+								id: "video-model-1",
+								modelId: "fal-ai/kling-video/v1",
+								name: "Kling Video",
+								providerId: "fal-provider",
+								providerName: "fal",
+								providerStatus: "active",
+								category: "video",
+								enabled: "true",
+								capabilities: ["video"],
+							},
+						];
+				await route.fulfill({
+					status: 200,
+					contentType: "application/json",
+					body: JSON.stringify({ models }),
+				});
+			} else {
+				await route.continue();
+			}
+		});
+
+		// Mock auth session
+		await page.route("**/api/auth/**", async (route) => {
+			await route.fulfill({
+				status: 200,
+				headers: {
+					"access-control-allow-origin": "http://127.0.0.1:3000",
+					"access-control-allow-credentials": "true",
+					"content-type": "application/json",
+				},
+				body: JSON.stringify({
+					session: {
+						id: "mock-session-id",
+						userId: "mock-user-id",
+						expiresAt: new Date(Date.now() + 86400000).toISOString(),
+					},
+					user: {
+						id: "mock-user-id",
+						name: "Demo User",
+						email: "demo@poly-ai.app",
+					},
+				}),
+			});
+		});
+
+		// Mock the video history
+		await page.route("**/api/generations?category=video*", async (route) => {
+			await route.fulfill({
+				status: 200,
+				contentType: "application/json",
+				body: JSON.stringify({
+					generations: [
+						{
+							id: "gen-evidence-video-1",
+							userId: "mock-user-id",
+							category: "video",
+							providerId: "fal-provider",
+							modelId: "fal-ai/kling-video/v1",
+							prompt:
+								"A drone shot flying over a pine forest at sunrise, cinematic lighting",
+							status: "succeeded",
+							outputUrl: `${BASE_URL}/mock-evidence-video.mp4`,
+							createdAt: new Date().toISOString(),
+						},
+					],
+				}),
+			});
+		});
+
+		// Mock the music history
+		await page.route("**/api/generations?category=music*", async (route) => {
+			await route.fulfill({
+				status: 200,
+				contentType: "application/json",
+				body: JSON.stringify({
+					generations: [
+						{
+							id: "gen-evidence-music-1",
+							userId: "mock-user-id",
+							category: "music",
+							providerId: "fal-provider",
+							modelId: "fal-ai/ace-music",
+							prompt: "A lo-fi hip hop beat with warm rhodes and vinyl crackle",
+							status: "succeeded",
+							outputUrl: `${BASE_URL}/mock-evidence-audio.wav`,
+							createdAt: new Date().toISOString(),
+						},
+					],
+				}),
+			});
+		});
+
+		// Serve the placeholder assets for the mocked history rows
+		await page.route("**/mock-evidence-video.mp4", async (route) => {
+			await route.fulfill({
+				status: 200,
+				contentType: "video/mp4",
+				body: Buffer.from(
+					"AAAAHGZ0eXBpc29tAAACAGlzb21pc28ybXA0MQAAAHRtb292AAAAbG12aGQAAAAAAAAAAAAAAAAAAAPoAAAAAAABAAABAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAGG1kYXQAAAAAAAAAAAAAAAAAAAAA",
+					"base64",
+				),
+			});
+		});
+		await page.route("**/mock-evidence-audio.wav", async (route) => {
+			await route.fulfill({
+				status: 200,
+				contentType: "audio/wav",
+				body: Buffer.from(
+					"UklGRjQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YRAAAAAAAAAAAAAAAAAAAAAAAAAA",
+					"base64",
+				),
+			});
+		});
+
+		// Mock the job creation endpoints
+		await page.route("**/api/generate/video", async (route) => {
+			if (route.request().method() === "POST") {
+				await route.fulfill({
+					status: 202,
+					contentType: "application/json",
+					body: JSON.stringify({
+						generation: { id: "gen-evidence-video-2", status: "queued" },
+					}),
+				});
+			} else {
+				await route.continue();
+			}
+		});
+		await page.route("**/api/generate/music", async (route) => {
+			if (route.request().method() === "POST") {
+				await route.fulfill({
+					status: 202,
+					contentType: "application/json",
+					body: JSON.stringify({
+						generation: { id: "gen-evidence-music-2", status: "queued" },
+					}),
+				});
+			} else {
+				await route.continue();
+			}
+		});
+
+		// Mock the job status endpoint
+		await page.route("**/api/generations/gen-evidence-*", async (route) => {
+			await route.fulfill({
+				status: 200,
+				contentType: "application/json",
+				body: JSON.stringify({
+					generation: {
+						id: "gen-evidence-video-2",
+						status: "succeeded",
+						outputUrl: `${BASE_URL}/mock-evidence-video.mp4`,
+					},
+				}),
+			});
+		});
+
+		// Add session cookie to access /app routes
+		await context.addCookies([
+			{
+				name: "better-auth.session_token",
+				value: "mock-session-token-evidence",
+				domain: urlObj.hostname,
+				path: "/",
+				httpOnly: true,
+				sameSite: "Lax",
+			},
+		]);
+
+		// 1. Visit /app/video and capture the workspace with its history
+		await page.goto(`${BASE_URL}/app/video`, { waitUntil: "networkidle" });
+		await page.waitForTimeout(800);
+		await shoot("video-workspace");
+
+		// 2. Fill the prompt and capture the form state
+		const videoPrompt = page.locator("#video-prompt");
+		if (await videoPrompt.count()) {
+			await videoPrompt.fill(
+				"A drone shot flying over a pine forest at sunrise, cinematic lighting",
+			);
+			await page.waitForTimeout(300);
+			await shoot("video-prompt-filled");
+		}
+
+		// 3. Visit /app/music and capture the workspace
+		await page.goto(`${BASE_URL}/app/music`, { waitUntil: "networkidle" });
+		await page.waitForTimeout(800);
+		await shoot("music-workspace");
+
+		// 4. The history sits in the lower half of the workspace, so shorten the
+		// viewport to let the list with the audio player fill the frame.
+		await page.setViewportSize({ width: VIEWPORT.width, height: 560 });
+		const musicHistory = page.getByRole("heading", { name: "History" });
+		if (await musicHistory.count()) {
+			await musicHistory.first().evaluate((element) => {
+				element.scrollIntoView({ block: "start", behavior: "instant" });
+			});
+			await page.waitForTimeout(400);
+		}
+		await shoot("music-history");
+		await page.setViewportSize(VIEWPORT);
 	}
 	const video = page.video();
 	await context.close();
