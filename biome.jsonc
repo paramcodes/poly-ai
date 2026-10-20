@@ -14,6 +14,7 @@
 			"!dist",
 			"!build",
 			"!docs/evidence",
+			"!drizzle",
 			"!test-results",
 			"!playwright-report"
 		]
