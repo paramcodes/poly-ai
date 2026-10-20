@@ -199,7 +199,7 @@ export function WebsiteWorkspace({
 						</div>
 						{isLoading && (
 							<div className="flex items-center gap-1.5 text-xs text-primary">
-								<Loader2 className="size-3 animate-spin" />
+								<Loader2 className="size-3 animate-spin motion-reduce:animate-none" />
 								<span>
 									{status === "streaming" ? "Streaming..." : "Generating..."}
 								</span>

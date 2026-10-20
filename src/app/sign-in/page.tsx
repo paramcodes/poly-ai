@@ -102,7 +102,9 @@ function SignInForm() {
 						/>
 					</div>
 					<Button type="submit" className="w-full" disabled={loading}>
-						{loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+						{loading && (
+							<Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
+						)}
 						Sign In
 					</Button>
 
@@ -156,7 +158,7 @@ export default function SignInPage() {
 			<Suspense
 				fallback={
 					<div className="flex items-center justify-center">
-						<Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+						<Loader2 className="h-6 w-6 animate-spin motion-reduce:animate-none text-muted-foreground" />
 					</div>
 				}
 			>

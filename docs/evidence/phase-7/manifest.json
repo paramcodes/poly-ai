@@ -1,0 +1,22 @@
+{
+  "phase": "7",
+  "baseUrl": "http://127.0.0.1:3000",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "capturedAt": "2026-10-20T19:56:18.414Z",
+  "artefacts": [
+    "landing-viewport.png",
+    "landing-full.png",
+    "landing-light.png",
+    "app-shell-preview.png",
+    "text-workspace.png",
+    "shortcuts-dialog.png",
+    "image-workspace.png",
+    "settings-providers.png",
+    "walkthrough.webm",
+    "walkthrough.gif"
+  ],
+  "consoleErrors": 0
+}

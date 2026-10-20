@@ -11,9 +11,11 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { EmptyIllustration } from "@/components/app/empty-illustration";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export type MediaJobStatus =
 	| "queued"
@@ -116,17 +118,34 @@ export function MediaHistory({
 					className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
 				>
 					<RefreshCw
-						className={`size-3.5 mr-1 ${loading ? "animate-spin" : ""}`}
+						className={`size-3.5 mr-1 ${loading ? "animate-spin motion-reduce:animate-none" : ""}`}
 					/>
 					Refresh
 				</Button>
 			</div>
 
-			{generations.length === 0 ? (
+			{loading && generations.length === 0 ? (
+				<div
+					className="grid grid-cols-1 md:grid-cols-2 gap-4"
+					data-slot="history-skeletons"
+				>
+					{[1, 2].map((i) => (
+						<div
+							key={i}
+							className="p-4 flex flex-col gap-3 rounded-xl border bg-card"
+						>
+							<Skeleton className="h-4 w-5/6" />
+							<div className="flex gap-2">
+								<Skeleton className="h-4 w-12" />
+								<Skeleton className="h-4 w-20" />
+							</div>
+							<Skeleton className="h-28 w-full rounded-md" />
+						</div>
+					))}
+				</div>
+			) : generations.length === 0 ? (
 				<div className="flex min-h-[280px] flex-col items-center justify-center rounded-xl border border-dashed p-8 text-center bg-muted/20">
-					<div className="flex size-12 items-center justify-center rounded-full bg-muted mb-3">
-						<Icon className="size-6 text-muted-foreground" />
-					</div>
+					<EmptyIllustration kind={category} size="lg" className="mb-4" />
 					<h3 className="text-base font-semibold">Ready to generate</h3>
 					<p className="text-sm text-muted-foreground max-w-sm mt-1">
 						Type a prompt above and click Generate to create your first {noun}{" "}

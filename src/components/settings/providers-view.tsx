@@ -1,9 +1,10 @@
 "use client";
 
-import { ChevronRight, Key, Loader2, Plus, Sparkles } from "lucide-react";
+import { ChevronRight, Plus, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { EmptyIllustration } from "@/components/app/empty-illustration";
 import { AddProviderDialog } from "@/components/settings/add-provider-dialog";
 import { AssignModelDialog } from "@/components/settings/assign-model-dialog";
 import {
@@ -23,6 +24,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { CatalogueResponse } from "@/server/catalogue";
 
 export function ProvidersSettingsView() {
@@ -210,13 +212,14 @@ export function ProvidersSettingsView() {
 				</CardHeader>
 				<CardContent>
 					{loading ? (
-						<div className="flex items-center justify-center p-8 text-muted-foreground">
-							<Loader2 className="size-6 animate-spin mr-2" /> Loading
-							providers...
+						<div className="space-y-3 p-2" data-slot="providers-skeleton">
+							<Skeleton className="h-10 w-full" />
+							<Skeleton className="h-10 w-full" />
+							<Skeleton className="h-10 w-full" />
 						</div>
 					) : providers.length === 0 ? (
-						<div className="flex flex-col items-center justify-center p-8 text-center border border-dashed rounded-lg">
-							<Key className="size-8 text-muted-foreground/60 mb-2" />
+						<div className="flex flex-col items-center justify-center p-8 text-center border border-dashed rounded-lg bg-muted/10">
+							<EmptyIllustration kind="provider" size="md" className="mb-3" />
 							<p className="text-sm font-medium">No providers added yet</p>
 							<p className="text-xs text-muted-foreground mt-1 max-w-sm">
 								Click "Add Provider" above to connect your OpenAI, Anthropic,

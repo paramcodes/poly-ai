@@ -13,6 +13,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type * as React from "react";
+import { ShortcutsDialog } from "@/components/app/shortcuts-dialog";
 import { ThemeToggle } from "@/components/landing/theme-toggle";
 import {
 	Sidebar,
@@ -163,7 +164,10 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
 							) : null}
 						</div>
 					</div>
-					<ThemeToggle />
+					<div className="flex items-center gap-1">
+						<ShortcutsDialog />
+						<ThemeToggle />
+					</div>
 				</div>
 			</SidebarFooter>
 		</Sidebar>

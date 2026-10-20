@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  verify:
+    name: Verification Gate
+    runs-on: ubuntu-latest
+    env:
+      BETTER_AUTH_SECRET: "ci-test-secret-at-least-32-chars-long"
+      KEY_ENCRYPTION_SECRET: "ci-encryption-secret-32-bytes-key!!"
+      NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Biome Lint
+        run: pnpm lint
+
+      - name: TypeScript
+        run: pnpm typecheck
+
+      - name: Vitest Unit & Integration Tests
+        run: pnpm test
+
+      - name: Next.js Production Build
+        run: pnpm build
+
+      - name: Commit-size Gate
+        if: github.event_name == 'pull_request'
+        run: pnpm check:commit-size --base "origin/${{ github.base_ref }}" --head "${{ github.event.pull_request.head.sha }}"

@@ -23,7 +23,7 @@ import { chromium } from "@playwright/test";
 
 const run = promisify(execFile);
 
-const PHASE = process.env.EVIDENCE_PHASE ?? "5";
+const PHASE = process.env.EVIDENCE_PHASE ?? "7";
 const BASE_URL = process.env.EVIDENCE_BASE_URL ?? "http://127.0.0.1:3000";
 const OUT_DIR = path.resolve(
 	process.cwd(),
@@ -920,6 +920,159 @@ async function main() {
 			captured.push("music-history.png");
 			console.log("  captured music-history.png");
 		}
+		await page.setViewportSize(VIEWPORT);
+	} else if (PHASE === "7") {
+		const urlObj = new URL(BASE_URL);
+
+		// Mock auth session
+		await page.route("**/api/auth/**", async (route) => {
+			await route.fulfill({
+				status: 200,
+				headers: {
+					"access-control-allow-origin": "http://127.0.0.1:3000",
+					"access-control-allow-credentials": "true",
+					"content-type": "application/json",
+				},
+				body: JSON.stringify({
+					session: {
+						id: "mock-session-id",
+						userId: "mock-user-id",
+						expiresAt: new Date(Date.now() + 86400000).toISOString(),
+					},
+					user: {
+						id: "mock-user-id",
+						name: "Demo User",
+						email: "demo@poly-ai.app",
+					},
+				}),
+			});
+		});
+
+		// Mock assigned models
+		await page.route("**/api/models*", async (route) => {
+			if (route.request().method() === "GET") {
+				const models = [
+					{
+						id: "text-model-1",
+						modelId: "gpt-4o",
+						name: "GPT-4o",
+						providerId: "openai-provider",
+						providerName: "OpenAI",
+						providerStatus: "active",
+						category: "text",
+						enabled: "true",
+						capabilities: ["text"],
+					},
+					{
+						id: "image-model-1",
+						modelId: "flux-schnell",
+						name: "FLUX Schnell",
+						providerId: "fal-provider",
+						providerName: "fal",
+						providerStatus: "active",
+						category: "image",
+						enabled: "true",
+						capabilities: ["image"],
+					},
+					{
+						id: "video-model-1",
+						modelId: "kling-v1",
+						name: "Kling Video",
+						providerId: "fal-provider",
+						providerName: "fal",
+						providerStatus: "active",
+						category: "video",
+						enabled: "true",
+						capabilities: ["video"],
+					},
+				];
+				await route.fulfill({
+					status: 200,
+					contentType: "application/json",
+					body: JSON.stringify({ models }),
+				});
+			} else {
+				await route.continue();
+			}
+		});
+
+		// Mock providers
+		await page.route("**/api/providers*", async (route) => {
+			if (route.request().method() === "GET") {
+				await route.fulfill({
+					status: 200,
+					contentType: "application/json",
+					body: JSON.stringify({
+						providers: [
+							{
+								id: "openai-provider",
+								name: "OpenAI",
+								providerType: "openai",
+								baseUrl: null,
+								status: "active",
+								modelCount: 4,
+							},
+							{
+								id: "fal-provider",
+								name: "fal.ai",
+								providerType: "fal",
+								baseUrl: null,
+								status: "active",
+								modelCount: 2,
+							},
+						],
+					}),
+				});
+			} else {
+				await route.continue();
+			}
+		});
+
+		// Mock empty generations for image
+		await page.route("**/api/generations?category=image*", async (route) => {
+			await route.fulfill({
+				status: 200,
+				contentType: "application/json",
+				body: JSON.stringify({ generations: [] }),
+			});
+		});
+
+		// Add session cookie to access /app routes
+		await context.addCookies([
+			{
+				name: "better-auth.session_token",
+				value: "mock-session-token-evidence",
+				domain: urlObj.hostname,
+				path: "/",
+				httpOnly: true,
+				sameSite: "Lax",
+			},
+		]);
+
+		// 1. Visit /app/text
+		await page.goto(`${BASE_URL}/app/text`, { waitUntil: "networkidle" });
+		await page.waitForTimeout(800);
+		await shoot("text-workspace");
+
+		// 2. Open keyboard shortcuts dialog via '?' key
+		await page.keyboard.press("?");
+		await page.waitForTimeout(400);
+		await shoot("shortcuts-dialog");
+		await page.keyboard.press("Escape");
+		await page.waitForTimeout(300);
+
+		// 3. Visit /app/image (empty illustration)
+		await page.goto(`${BASE_URL}/app/image`, { waitUntil: "networkidle" });
+		await page.waitForTimeout(800);
+		await shoot("image-workspace");
+
+		// 4. Visit /settings/providers
+		await page.goto(`${BASE_URL}/settings/providers`, {
+			waitUntil: "networkidle",
+		});
+		await page.waitForTimeout(800);
+		await shoot("settings-providers");
+
 		await page.setViewportSize(VIEWPORT);
 	}
 	const video = page.video();

@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import { splitMessage } from "../../scripts/lib/commit-message";
 import {
 	BINARY_FILE_PENALTY,
+	countCommitTokens,
 	countStagedTokens,
 	DEFAULT_TOKEN_LIMIT,
+	getBranchCommits,
 	isExempt,
 	resolveLimit,
 } from "../../scripts/lib/commit-tokens";
@@ -85,6 +87,15 @@ describe("countStagedTokens", () => {
 
 		if (hasStagedText) {
 			expect(report.total).toBeGreaterThan(0);
+		}
+	});
+
+	it("counts tokens from an existing commit", () => {
+		const commits = getBranchCommits("HEAD~1", "HEAD");
+		if (commits.length > 0) {
+			const report = countCommitTokens(commits[0]);
+			expect(report.limit).toBe(3000);
+			expect(typeof report.total).toBe("number");
 		}
 	});
 });

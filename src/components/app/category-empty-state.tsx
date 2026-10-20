@@ -3,6 +3,7 @@
 import { AlertCircle, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { useEffect } from "react";
+import { EmptyIllustration } from "@/components/app/empty-illustration";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -33,30 +34,35 @@ export function CategoryEmptyState({
 
 	return (
 		<Card className="border-dashed" data-slot="category-empty-state">
-			<CardHeader className="space-y-2">
-				<div className="flex items-center gap-2">
-					{isFailed ? (
-						<AlertTriangle
-							className="size-5 text-destructive shrink-0"
-							aria-hidden="true"
-						/>
-					) : (
-						<AlertCircle
-							className="size-5 text-amber-500 shrink-0"
-							aria-hidden="true"
-						/>
-					)}
-					<CardTitle className="text-base font-semibold">
-						{isFailed
-							? "Provider verification failed"
-							: `No models configured for ${categoryName}`}
-					</CardTitle>
+			<CardHeader className="space-y-4">
+				<div className="flex items-center gap-4">
+					<EmptyIllustration kind={category} size="md" />
+					<div className="space-y-1">
+						<div className="flex items-center gap-2">
+							{isFailed ? (
+								<AlertTriangle
+									className="size-4 text-destructive shrink-0"
+									aria-hidden="true"
+								/>
+							) : (
+								<AlertCircle
+									className="size-4 text-amber-500 shrink-0"
+									aria-hidden="true"
+								/>
+							)}
+							<CardTitle className="text-base font-semibold">
+								{isFailed
+									? "Provider verification failed"
+									: `No models configured for ${categoryName}`}
+							</CardTitle>
+						</div>
+						<CardDescription className="text-sm">
+							{isFailed
+								? `Provider verification failed for ${categoryName} models. Check your provider settings in Settings to restore access.`
+								: `No active models are configured for ${categoryName}. Configure a provider and enable models in Settings to get started.`}
+						</CardDescription>
+					</div>
 				</div>
-				<CardDescription className="text-sm">
-					{isFailed
-						? `Provider verification failed for ${categoryName} models. Check your provider settings in Settings to restore access.`
-						: `No active models are configured for ${categoryName}. Configure a provider and enable models in Settings to get started.`}
-				</CardDescription>
 			</CardHeader>
 			<CardFooter>
 				<Button asChild>
