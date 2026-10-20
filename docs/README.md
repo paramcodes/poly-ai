@@ -15,7 +15,7 @@ Poly-AI is a multi-user web app for generating media with your own AI vendor acc
 | `docs/features/` | One document per user-facing feature. Describes how the feature works *and* how its pieces interact with the rest of the app. | Before changing a feature's behaviour, and when you need to know which other features depend on it. | Intended layout. Written as each feature lands, so most are not written yet. |
 | `docs/components/` | One document per reusable UI component: its props contract, its state ownership, and the module that owns it. | Before you change a component's props or move it, and when a component is used in more than one category page. | Intended layout. Not yet written. |
 | `docs/guides/` | Task-shaped guides that tell you *how to do something* — how to work in this repo, how to add a provider, how to release a phase. | When you need a procedure, not an explanation. | Populated: `working-on-this-repo.md` is the operating guide for contributors and agents. |
-| `docs/evidence/` | Committed screenshots and GIFs, one directory per phase (`phase-<N>/`), captured by `pnpm evidence`. | When reviewing a phase PR, or when you want to see what a feature actually looked like when it shipped. | Populated: `phase-0/` holds the landing-page evidence. |
+| `docs/evidence/` | Committed screenshots and GIFs, one directory per phase (`phase-<N>/`), captured by `pnpm evidence`. | When reviewing a phase PR, or when you want to see what a feature actually looked like when it shipped. | Populated: `phase-0/` through `phase-5/`. |
 
 Two files sit at the top of `docs/` rather than in a directory: this index and [`glossary.md`](./glossary.md), which fixes the vocabulary the rest of the docs and the code share.
 
