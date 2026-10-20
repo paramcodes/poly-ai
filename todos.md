@@ -5,8 +5,8 @@
 
 ## Current phase
 
-**Phase 5 — Image** · status: complete
-Branch: `phase/5-image` · PR: #2
+**Phase 6 — Video and music** · status: complete
+Branch: `phase/6-video-and-music` · PR: #4
 
 ## Legend
 
@@ -84,10 +84,15 @@ Branch: `phase/5-image` · PR: #2
 
 ## Phase 6 — Video and music
 
-- [ ] Resumable job model — create, run, poll, refresh
-- [ ] fal.ai and Replicate music adapters
-- [ ] TTS through `generateSpeech`
-- [ ] Media players, history panel with retry
+- [x] Resumable job model — `createMediaJob`, `refreshMediaJob`, `retryMediaJob`
+      in `src/server/generation/job.ts`, on the existing `generations` row
+- [x] fal.ai and Replicate queue adapters behind one `AsyncJobAdapter`
+- [x] TTS through `generateSpeech` — `src/server/adapters/speech.ts`
+- [x] Media players, history panel with retry — `media-history.tsx`
+- [x] Video and music workspaces, polling every five seconds
+- [x] ADR-0012 — one adapter interface for asynchronous media jobs
+- [x] Feature docs — `docs/features/video.md`, `docs/features/music.md`
+- [x] End-to-end test and phase-6 evidence
 
 ## Phase 7 — Polish and CI
 
@@ -130,6 +135,16 @@ Branch: `phase/5-image` · PR: #2
 - The AI SDK image model interface in `ai@7.0.145` is `ImageModelV2`; a v3 or v4
   mock needs a `response` field with `timestamp`, `modelId` and `headers`.
 - There is no AI SDK music API. Songs need a fal.ai or Replicate queue adapter.
+- `@ai-sdk/openai-compatible@2` ships **no** speech model — no `speechModel()` on
+  the provider — so text-to-speech is a hand-written `SpeechModelV2` that posts to
+  the OpenAI `/audio/speech` endpoint. `ai@7` does not re-export `SpeechModelV2`
+  either; it lives in `@ai-sdk/provider`.
+- Video and music are observed by **polling** `GET /api/generations/:id`, not by
+  SSE. Only the image category streams `GenerationEvent`s. The reason is that a
+  job that runs for minutes outlives the request that started it.
+- The music category has two mechanisms: a song is a queued job, voice is
+  rendered inside the request. Both write a `generations` row with the category
+  `music`.
 - For the website allowlist, match the catalogue's real `family` tokens
   (`claude-sonnet`, `gpt-codex`, `qwen3.5`, …), not model-id substrings.
 - AG-UI is not adopted; AI SDK v7's own streaming is the protocol. See ADR-0005.
