@@ -911,17 +911,15 @@ async function main() {
 		await page.waitForTimeout(800);
 		await shoot("music-workspace");
 
-		// 4. The history sits in the lower half of the workspace, so shorten the
-		// viewport to let the list with the audio player fill the frame.
-		await page.setViewportSize({ width: VIEWPORT.width, height: 560 });
-		const musicHistory = page.getByRole("heading", { name: "History" });
+		// 4. The history sits in the lower half of the workspace, so capture the
+		// list itself rather than a viewport cut through the form above it.
+		const musicHistory = page.locator("[data-slot='media-history']").first();
 		if (await musicHistory.count()) {
-			await musicHistory.first().evaluate((element) => {
-				element.scrollIntoView({ block: "start", behavior: "instant" });
-			});
-			await page.waitForTimeout(400);
+			const file = path.join(OUT_DIR, "music-history.png");
+			await musicHistory.screenshot({ path: file });
+			captured.push("music-history.png");
+			console.log("  captured music-history.png");
 		}
-		await shoot("music-history");
 		await page.setViewportSize(VIEWPORT);
 	}
 	const video = page.video();

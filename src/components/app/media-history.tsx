@@ -99,7 +99,7 @@ export function MediaHistory({
 	};
 
 	return (
-		<div className="flex flex-col gap-4">
+		<div className="flex flex-col gap-4" data-slot="media-history">
 			<div className="flex items-center justify-between pb-2 border-b">
 				<div className="flex items-center gap-2">
 					<Icon className="size-4 text-muted-foreground" />
