@@ -203,7 +203,7 @@ export function countCommitTokens(sha: string): DiffTokenReport {
  * Return all commit SHAs on the branch between base and head.
  */
 export function getBranchCommits(base: string, head = "HEAD"): string[] {
-	const out = git(["rev-list", "--reverse", `${base}..${head}`]);
+	const out = git(["rev-list", "--no-merges", "--reverse", `${base}..${head}`]);
 	if (!out) return [];
 	return out
 		.split("\n")

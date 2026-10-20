@@ -19,13 +19,15 @@ import {
 
 const args = process.argv.slice(2);
 const baseIdx = args.indexOf("--base");
+const headIdx = args.indexOf("--head");
 
 if (baseIdx !== -1) {
 	const base = args[baseIdx + 1] || "origin/master";
-	const commits = getBranchCommits(base);
+	const head = headIdx !== -1 && args[headIdx + 1] ? args[headIdx + 1] : "HEAD";
+	const commits = getBranchCommits(base, head);
 
 	if (commits.length === 0) {
-		console.log(`✔ No commits between ${base} and HEAD.`);
+		console.log(`✔ No commits between ${base} and ${head}.`);
 		process.exit(0);
 	}
 

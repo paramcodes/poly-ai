@@ -46,4 +46,4 @@ jobs:
 
       - name: Commit-size Gate
         if: github.event_name == 'pull_request'
-        run: pnpm check:commit-size --base "origin/${{ github.base_ref }}"
+        run: pnpm check:commit-size --base "origin/${{ github.base_ref }}" --head "${{ github.event.pull_request.head.sha }}"
