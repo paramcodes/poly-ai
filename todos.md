@@ -6,7 +6,7 @@
 ## Current phase
 
 **Phase 5 — Image** · status: complete
-Branch: `phase/5-image` · PR: not yet opened
+Branch: `phase/5-image` · PR: #2
 
 ## Legend
 
