@@ -23,7 +23,7 @@ import { chromium } from "@playwright/test";
 
 const run = promisify(execFile);
 
-const PHASE = process.env.EVIDENCE_PHASE ?? "3";
+const PHASE = process.env.EVIDENCE_PHASE ?? "4";
 const BASE_URL = process.env.EVIDENCE_BASE_URL ?? "http://127.0.0.1:3000";
 const OUT_DIR = path.resolve(
 	process.cwd(),
@@ -315,6 +315,263 @@ async function main() {
 		});
 		await page.waitForTimeout(600);
 		await shoot("app-shell-website");
+	} else if (PHASE === "4") {
+		const urlObj = new URL(BASE_URL);
+
+		// Mock route responses for models
+		await page.route("**/api/models*", async (route) => {
+			if (route.request().method() === "GET") {
+				const url = route.request().url();
+				const isWebsite = url.includes("category=website");
+				const models = isWebsite
+					? [
+							{
+								id: "website-model-1",
+								modelId: "claude-3-5-sonnet",
+								name: "Claude 3.5 Sonnet",
+								providerId: "anthropic-provider",
+								providerName: "Anthropic",
+								providerStatus: "active",
+								category: "website",
+								enabled: "true",
+								capabilities: ["website"],
+							},
+						]
+					: [
+							{
+								id: "text-model-1",
+								modelId: "gpt-4o",
+								name: "GPT-4o",
+								providerId: "openai-provider",
+								providerName: "OpenAI",
+								providerStatus: "active",
+								category: "text",
+								enabled: "true",
+								capabilities: ["text"],
+							},
+						];
+				await route.fulfill({
+					status: 200,
+					contentType: "application/json",
+					body: JSON.stringify({ models }),
+				});
+			} else {
+				await route.continue();
+			}
+		});
+
+		// Mock auth session to populate user profile and prevent CORS errors
+		await page.route("**/api/auth/**", async (route) => {
+			await route.fulfill({
+				status: 200,
+				headers: {
+					"access-control-allow-origin": "http://127.0.0.1:3000",
+					"access-control-allow-credentials": "true",
+					"content-type": "application/json",
+				},
+				body: JSON.stringify({
+					session: {
+						id: "mock-session-id",
+						userId: "mock-user-id",
+						expiresAt: new Date(Date.now() + 86400000).toISOString(),
+					},
+					user: {
+						id: "mock-user-id",
+						name: "Demo User",
+						email: "demo@poly-ai.app",
+					},
+				}),
+			});
+		});
+
+		// Mock text streaming route
+		await page.route("**/api/generate/text", async (route) => {
+			if (route.request().method() === "POST") {
+				const textChunks = [
+					"Poly-AI streams generative output in real time ",
+					"across 200+ providers and 9,000+ models. ",
+					"Built on the Vercel AI SDK v7 data stream protocol, ",
+					"text responses render with low-latency incremental chunking, ",
+					"automatic message scrolling, and direct clipboard copying.",
+				];
+				const lines = [
+					'data: {"type":"start"}',
+					'data: {"type":"start-step"}',
+					'data: {"type":"text-start","id":"msg-stream-evidence"}',
+					...textChunks.map(
+						(chunk) =>
+							`data: ${JSON.stringify({
+								type: "text-delta",
+								id: "msg-stream-evidence",
+								delta: chunk,
+							})}`,
+					),
+					'data: {"type":"text-end","id":"msg-stream-evidence"}',
+					'data: {"type":"finish-step"}',
+					'data: {"type":"finish"}',
+					"data: [DONE]",
+					"",
+				];
+				await route.fulfill({
+					status: 200,
+					headers: {
+						"content-type": "text/event-stream",
+						"cache-control": "no-cache",
+						connection: "keep-alive",
+						"x-vercel-ai-ui-message-stream": "v1",
+					},
+					body: lines.join("\n\n"),
+				});
+			} else {
+				await route.continue();
+			}
+		});
+
+		// Mock website streaming route
+		const websiteHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Poly-AI Stream Studio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-8 antialiased">
+  <div class="max-w-4xl mx-auto space-y-6">
+    <header class="flex items-center justify-between border-b border-slate-800 pb-4">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight text-indigo-400">Poly-AI Stream Studio</h1>
+        <p class="text-sm text-slate-400 mt-0.5">Real-time BYOK Multi-Modal Generation Platform</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Live Preview</span>
+      </div>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="p-5 rounded-xl bg-slate-900 border border-slate-800 shadow-sm">
+        <div class="text-xs uppercase tracking-wider font-semibold text-slate-400">Total Models</div>
+        <div class="text-3xl font-extrabold text-white mt-2">9,079</div>
+        <div class="text-xs text-slate-500 mt-1">Across 232 providers</div>
+      </div>
+      <div class="p-5 rounded-xl bg-slate-900 border border-slate-800 shadow-sm">
+        <div class="text-xs uppercase tracking-wider font-semibold text-slate-400">Streaming Latency</div>
+        <div class="text-3xl font-extrabold text-indigo-400 mt-2">18ms</div>
+        <div class="text-xs text-slate-500 mt-1">First token time-to-render</div>
+      </div>
+      <div class="p-5 rounded-xl bg-slate-900 border border-slate-800 shadow-sm">
+        <div class="text-xs uppercase tracking-wider font-semibold text-slate-400">Security & BYOK</div>
+        <div class="text-3xl font-extrabold text-emerald-400 mt-2">AES-256</div>
+        <div class="text-xs text-slate-500 mt-1">Zero third-party retention</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+
+		await page.route("**/api/generate/website", async (route) => {
+			if (route.request().method() === "POST") {
+				const streamChunks = ["```html\n", websiteHtml, "\n```"];
+				const lines = [
+					'data: {"type":"start"}',
+					'data: {"type":"start-step"}',
+					'data: {"type":"text-start","id":"website-stream-evidence"}',
+					...streamChunks.map(
+						(chunk) =>
+							`data: ${JSON.stringify({
+								type: "text-delta",
+								id: "website-stream-evidence",
+								delta: chunk,
+							})}`,
+					),
+					'data: {"type":"text-end","id":"website-stream-evidence"}',
+					'data: {"type":"finish-step"}',
+					'data: {"type":"finish"}',
+					"data: [DONE]",
+					"",
+				];
+				await route.fulfill({
+					status: 200,
+					headers: {
+						"content-type": "text/event-stream",
+						"cache-control": "no-cache",
+						connection: "keep-alive",
+						"x-vercel-ai-ui-message-stream": "v1",
+					},
+					body: lines.join("\n\n"),
+				});
+			} else {
+				await route.continue();
+			}
+		});
+
+		// Add session cookie to access /app routes
+		await context.addCookies([
+			{
+				name: "better-auth.session_token",
+				value: "mock-session-token-evidence",
+				domain: urlObj.hostname,
+				path: "/",
+				httpOnly: true,
+				sameSite: "Lax",
+			},
+		]);
+
+		// 1. Visit /app/text, generate response, and capture stream active
+		await page.goto(`${BASE_URL}/app/text`, { waitUntil: "networkidle" });
+		await page.waitForTimeout(600);
+
+		const textPromptInput = page.locator("#prompt-input");
+		if (await textPromptInput.count()) {
+			await textPromptInput.fill(
+				"Summarize Poly-AI architecture and streaming capabilities.",
+			);
+			const genBtn = page.getByRole("button", { name: /generate/i });
+			if (await genBtn.count()) {
+				await genBtn.click();
+				await page.waitForTimeout(1000);
+			}
+		}
+		await shoot("text-streaming");
+
+		// 2. Visit /app/website, generate HTML, and capture preview & code panes
+		await page.goto(`${BASE_URL}/app/website`, { waitUntil: "networkidle" });
+		await page.waitForTimeout(600);
+
+		const websitePromptInput = page.getByRole("textbox", {
+			name: "Website prompt",
+		});
+		if (await websitePromptInput.count()) {
+			await websitePromptInput.fill(
+				"Generate a responsive dark-themed analytics dashboard for Poly-AI.",
+			);
+			const genBtn = page.getByRole("button", { name: /generate/i });
+			if (await genBtn.count()) {
+				await genBtn.click();
+				await page.waitForTimeout(1200);
+			}
+		}
+
+		// Capture website preview pane
+		await shoot("website-preview");
+
+		// Toggle device width to tablet and capture
+		const tabletBtn = page
+			.getByRole("button", { name: "Tablet (768px)" })
+			.first();
+		if (await tabletBtn.count()) {
+			await tabletBtn.click();
+			await page.waitForTimeout(400);
+			await shoot("website-preview-tablet");
+		}
+
+		// Switch to Code tab and capture code pane
+		const codeTab = page.getByRole("tab", { name: /Code/i });
+		if (await codeTab.count()) {
+			await codeTab.click();
+			await page.waitForTimeout(400);
+			await shoot("website-code");
+		}
 	}
 	const video = page.video();
 	await context.close();
