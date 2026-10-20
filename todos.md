@@ -5,8 +5,8 @@
 
 ## Current phase
 
-**Phase 6 — Video and music** · status: complete
-Branch: `phase/6-video-and-music` · PR: #4
+**Phase 7 — Polish and CI** · status: complete
+Branch: `phase/7-polish-and-ci` · PR: #5
 
 ## Legend
 
@@ -96,10 +96,10 @@ Branch: `phase/6-video-and-music` · PR: #4
 
 ## Phase 7 — Polish and CI
 
-- [ ] Empty-state illustrations, skeletons, keyboard shortcuts
-- [ ] Reduced-motion audit
-- [ ] GitHub Actions — lint, typecheck, test, build, commit-size check
-- [ ] README with the BYOK walkthrough
+- [x] Empty-state illustrations, skeletons, keyboard shortcuts
+- [x] Reduced-motion audit
+- [x] GitHub Actions — lint, typecheck, test, build, commit-size check
+- [x] README with the BYOK walkthrough
 
 ## Blockers and open questions
 
