@@ -136,7 +136,15 @@ async function main() {
 		await page.waitForTimeout(400);
 		await shoot("app-shell-preview");
 	}
+	if (PHASE === "1") {
+		await page.goto(`${BASE_URL}/sign-in`, { waitUntil: "networkidle" });
+		await page.waitForTimeout(400);
+		await shoot("sign-in");
 
+		await page.goto(`${BASE_URL}/sign-up`, { waitUntil: "networkidle" });
+		await page.waitForTimeout(400);
+		await shoot("sign-up");
+	}
 	const video = page.video();
 	await context.close();
 	await browser.close();

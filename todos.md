@@ -5,8 +5,8 @@
 
 ## Current phase
 
-**Phase 0 — Bootstrap** · status: in progress
-Branch: `phase/0-bootstrap` · PR: not yet opened
+**Phase 1 — Data and auth** · status: in progress
+Branch: `phase/1-data-and-auth` · PR: not yet opened
 
 ## Legend
 
@@ -37,16 +37,16 @@ Branch: `phase/0-bootstrap` · PR: not yet opened
 - [x] `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build` all green
 - [x] `pnpm test:e2e` green — 4 tests
 - [x] Evidence capture — screenshots under `docs/evidence/phase-0/`
-- [ ] Open the PR, run the verification gate, self-merge
+- [x] Open the PR, run the verification gate, self-merge
 
 ## Phase 1 — Data and auth
 
-- [ ] Drizzle schema: `providers`, `models`, `generations` (+ Better Auth tables)
-- [ ] First migration, Neon connection, `drizzle.config.ts`
-- [ ] Better Auth — email/password, optional GitHub + Google OAuth, Drizzle adapter
-- [ ] `proxy.ts` guarding `/app/**` and `/settings/**`
-- [ ] Sign-in and sign-up pages
-- [ ] AES-256-GCM key envelope (`src/lib/crypto/keys.ts`) with unit tests
+- [x] Drizzle schema: `providers`, `models`, `generations` (+ Better Auth tables)
+- [x] First migration, Neon connection, `drizzle.config.ts`
+- [x] Better Auth — email/password, optional GitHub + Google OAuth, Drizzle adapter
+- [x] `proxy.ts` guarding `/app/**` and `/settings/**`
+- [x] Sign-in and sign-up pages
+- [x] AES-256-GCM key envelope (`src/lib/crypto/keys.ts`) with unit tests
 
 ## Phase 2 — Catalogue and providers
 
