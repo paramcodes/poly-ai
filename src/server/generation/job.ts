@@ -4,7 +4,10 @@ import { and, eq, or } from "drizzle-orm";
 import { decryptApiKey } from "@/lib/crypto/keys";
 import { db } from "@/lib/db";
 import { generations, models, providers } from "@/lib/db/schema";
-import { getAsyncJobAdapter } from "@/server/adapters/async-job";
+import {
+	type AsyncJobHandle,
+	getAsyncJobAdapter,
+} from "@/server/adapters/async-job";
 import { getSpeechModel } from "@/server/adapters/speech";
 import { getStorageAdapter } from "@/server/storage";
 
@@ -154,11 +157,30 @@ export async function createMediaJob(
 		baseUrl: providerRecord.baseUrl,
 		category,
 	});
-	const handle = await adapter.submit({
-		prompt,
-		modelId: modelRecord.modelId,
-		params,
-	});
+
+	let handle: AsyncJobHandle;
+	try {
+		handle = await adapter.submit({
+			prompt,
+			modelId: modelRecord.modelId,
+			params,
+		});
+	} catch (error) {
+		// The row exists but no provider job does, so it must not sit in
+		// `queued` for ever.
+		await db
+			.update(generations)
+			.set({
+				status: "failed",
+				error:
+					error instanceof Error
+						? error.message
+						: "The provider job could not be started",
+				updatedAt: new Date(),
+			})
+			.where(eq(generations.id, id));
+		throw error;
+	}
 
 	const updatedAt = new Date();
 	await db

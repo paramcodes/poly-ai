@@ -160,6 +160,25 @@ describe("media job orchestration", () => {
 		expect(row.providerExternalId).toBe("ext-123");
 	});
 
+	it("fails the row when the provider refuses the submission", async () => {
+		adapterMock.submit.mockRejectedValue(new Error("model is cold"));
+
+		await expect(
+			createMediaJob({
+				userId: "user-1",
+				providerId: "prov-1",
+				modelId: "kling-v1",
+				category: "video",
+				prompt: "a cat surfing",
+			}),
+		).rejects.toThrow("model is cold");
+
+		expect(state.updates[0]).toMatchObject({
+			status: "failed",
+			error: "model is cold",
+		});
+	});
+
 	it("stores the job params in the metadata column", async () => {
 		await createMediaJob({
 			userId: "user-1",
