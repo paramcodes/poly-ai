@@ -5,8 +5,8 @@
 
 ## Current phase
 
-**Phase 0 — Bootstrap** · status: in progress
-Branch: `phase/0-bootstrap` · PR: not yet opened
+**Phase 4 — Text and website streaming** · status: complete
+Branch: `phase/4-text-and-website-streaming` · PR: not yet opened
 
 ## Legend
 
@@ -37,42 +37,41 @@ Branch: `phase/0-bootstrap` · PR: not yet opened
 - [x] `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build` all green
 - [x] `pnpm test:e2e` green — 4 tests
 - [x] Evidence capture — screenshots under `docs/evidence/phase-0/`
-- [ ] Open the PR, run the verification gate, self-merge
+- [x] Open the PR, run the verification gate, self-merge
 
 ## Phase 1 — Data and auth
 
-- [ ] Drizzle schema: `providers`, `models`, `generations` (+ Better Auth tables)
-- [ ] First migration, Neon connection, `drizzle.config.ts`
-- [ ] Better Auth — email/password, optional GitHub + Google OAuth, Drizzle adapter
-- [ ] `proxy.ts` guarding `/app/**` and `/settings/**`
-- [ ] Sign-in and sign-up pages
-- [ ] AES-256-GCM key envelope (`src/lib/crypto/keys.ts`) with unit tests
+- [x] Drizzle schema: `providers`, `models`, `generations` (+ Better Auth tables)
+- [x] First migration, Neon connection, `drizzle.config.ts`
+- [x] Better Auth — email/password, optional GitHub + Google OAuth, Drizzle adapter
+- [x] `proxy.ts` guarding `/app/**` and `/settings/**`
+- [x] Sign-in and sign-up pages
+- [x] AES-256-GCM key envelope (`src/lib/crypto/keys.ts`) with unit tests
 
 ## Phase 2 — Catalogue and providers
 
-- [ ] `GET /api/catalog` — models.dev proxy, 6 h cache, committed snapshot fallback
-- [ ] `src/lib/capabilities.ts` — `modalities.output` → category mapping
-- [ ] Provider CRUD with encrypted key storage
-- [ ] "Add provider" form — known-provider combo + custom OpenAI-compatible
-- [ ] Model assignment table with capability gating
-- [ ] Provider verification probe
-
+- [x] `GET /api/catalog` — models.dev proxy, 6 h cache, committed snapshot fallback
+- [x] `src/lib/capabilities.ts` — `modalities.output` → category mapping
+- [x] Provider CRUD with encrypted key storage
+- [x] "Add provider" form — known-provider combo + custom OpenAI-compatible
+- [x] Model assignment table with capability gating
+- [x] Provider verification probe
 ## Phase 3 — App shell and categories
 
-- [ ] Collapsible sidebar, state persisted
-- [ ] Category routes `/app/[category]`
-- [ ] Model picker
-- [ ] Empty-state toast contract — amber for "not configured", red for "failed"
-- [ ] `src/lib/toast.ts` + `notifyCategoryEmpty` with unit tests
+- [x] Collapsible sidebar, state persisted
+- [x] Category routes `/app/[category]`
+- [x] Model picker
+- [x] Empty-state toast contract — amber for "not configured", red for "failed"
+- [x] `src/lib/toast.ts` + `notifyCategoryEmpty` with unit tests
 
 ## Phase 4 — Text and website streaming
 
-- [ ] `POST /api/generate/text` and `/api/generate/website` — AI SDK data stream
-- [ ] `useChat` wiring with `prepareSendMessagesRequest`
-- [ ] Website route — `ResizablePanelGroup`, prompt pane beside preview pane
-- [ ] `src/lib/website/extract-html.ts` with unit tests
-- [ ] Sandboxed `iframe` preview with live streaming updates and device toggles
-- [ ] Code tab, copy, download
+- [x] `POST /api/generate/text` and `/api/generate/website` — AI SDK data stream
+- [x] `useChat` wiring with `prepareSendMessagesRequest`
+- [x] Website route — `ResizablePanelGroup`, prompt pane beside preview pane
+- [x] `src/lib/website/extract-html.ts` with unit tests
+- [x] Sandboxed `iframe` preview with live streaming updates and device toggles
+- [x] Code tab, copy, download
 
 ## Phase 5 — Image
 
@@ -116,8 +115,7 @@ Branch: `phase/0-bootstrap` · PR: not yet opened
   `generateVideo` in v7.
 - `@ai-sdk/openai-compatible` exposes no video model factory — video needs a
   dedicated adapter (fal / Replicate / Google).
-- `useChat` and the newer `Chat` class both exist in `@ai-sdk/react@^4`. Pick one
-  in Phase 4 and record it in ADR-0005.
+- `useChat` with `DefaultChatTransport` is chosen and adopted for all streaming in Phase 4 (ADR-0005).
 - There is no AI SDK music API. Songs need a fal.ai or Replicate queue adapter.
 - For the website allowlist, match the catalogue's real `family` tokens
   (`claude-sonnet`, `gpt-codex`, `qwen3.5`, …), not model-id substrings.

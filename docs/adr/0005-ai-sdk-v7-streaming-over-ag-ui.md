@@ -91,14 +91,16 @@ Two design ideas from AG-UI are adopted, without the dependency:
   which protocol is in use**. Adding a fifth media type later touches the adapter, not
   the UI.
 
-### Open question to settle in implementation
+### Resolution of implementation question: `useChat` vs `Chat`
 
-`@ai-sdk/react@^4` exports **both** `useChat` (a React hook) **and** a `Chat` class
-(both are present in the installed package's type definitions). The hook is the
-path of least resistance; the class is the shape that composes better with external
-stores. **Which one is the recommended v7 entry point for this app is not settled here**,
-and the implementation phase must pick one, use it consistently, and update the follow-ups
-in this ADR. Until then, both are permitted and mixing them in one surface is not.
+In implementation (Phase 4), **`useChat` with `DefaultChatTransport` was chosen and adopted for all chat streaming** across both Text and Website categories.
+
+`useChat` from `@ai-sdk/react@^4` provides:
+1. **Idiomatic React lifecycle and hook ergonomics:** Directly encapsulates `messages`, `sendMessage`, `stop`, `status`, and `error` states without requiring manual subscription wiring or external store synchronization.
+2. **First-class transport configuration:** Instantiated with `new DefaultChatTransport({ api: "/api/generate/...", prepareSendMessagesRequest: ... })`, allowing the client to dynamically pass `providerId` and `modelId` along with UI message structures.
+3. **Decoupled testability:** Components accept an optional `transport` prop (`ChatTransport<UIMessage>`), making mock streams in unit tests (`simulateReadableStream`) and browser integration tests completely frictionless.
+
+The `Chat` class remains available upstream but is not used in Poly-AI; `useChat` is the standard entry point across the application.
 
 ## Consequences
 
@@ -131,8 +133,7 @@ in this ADR. Until then, both are permitted and mixing them in one surface is no
   would inherit.
 - **The `GenerationEvent` union is ours to maintain.** It has no upstream spec, so
   changes to media streaming semantics are internal changes.
-- **The `useChat` versus `Chat` question is unresolved**, and the two APIs have subtly
-  different ergonomics. Picking wrong costs a refactor of the streaming layer.
+- **The `useChat` versus `Chat` question is resolved:** `useChat` with `DefaultChatTransport` was chosen and adopted in Phase 4, removing uncertainty around client streaming ergonomics.
 
 ### Neutral / follow-ups
 
@@ -141,7 +142,7 @@ in this ADR. Until then, both are permitted and mixing them in one surface is no
 - If we later adopt AG-UI, the natural migration is: keep the `GenerationEvent` union as
   our internal model, and add an AG-UI encoder at the server boundary as an alternative
   transport. The client hook is the natural place to add a second protocol reader.
-- The `useChat` vs `Chat` decision must be recorded in this ADR's follow-ups once made.
+- The `useChat` vs `Chat` decision has been resolved in Phase 4: `useChat` with `DefaultChatTransport` is standard across text and website streaming.
 
 ## Alternatives considered
 

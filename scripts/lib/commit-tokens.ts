@@ -34,6 +34,7 @@ export const BINARY_FILE_PENALTY = 2000;
 export const EXEMPT_PATTERNS: RegExp[] = [
 	/^pnpm-lock\.yaml$/,
 	/^docs\/evidence\//,
+	/^src\/server\/catalogue\/models\.dev\.snapshot\.json$/,
 ];
 
 export interface FileTokenCount {

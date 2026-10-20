@@ -35,5 +35,14 @@ export default defineConfig({
 		timeout: 180_000,
 		stdout: "pipe",
 		stderr: "pipe",
+		env: {
+			BETTER_AUTH_SECRET:
+				process.env.BETTER_AUTH_SECRET ||
+				"mock-better-auth-secret-32-chars-long-abcdef",
+			KEY_ENCRYPTION_SECRET:
+				process.env.KEY_ENCRYPTION_SECRET ||
+				"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+			NEXT_PUBLIC_APP_URL: `http://127.0.0.1:${PORT}`,
+		},
 	},
 });
