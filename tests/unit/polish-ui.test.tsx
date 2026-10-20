@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { EmptyIllustration } from "@/components/app/empty-illustration";
 import { ImageGallery } from "@/components/app/image-gallery";
 import { MediaHistory } from "@/components/app/media-history";
-import { SHORTCUTS, ShortcutsDialog } from "@/components/app/shortcuts-dialog";
+import { ShortcutsDialog } from "@/components/app/shortcuts-dialog";
 
 describe("EmptyIllustration", () => {
 	it("renders illustrations with expected data-slot and kind attribute", () => {
