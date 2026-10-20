@@ -5,8 +5,8 @@
 
 ## Current phase
 
-**Phase 4 — Text and website streaming** · status: complete
-Branch: `phase/4-text-and-website-streaming` · PR: not yet opened
+**Phase 5 — Image** · status: complete
+Branch: `phase/5-image` · PR: not yet opened
 
 ## Legend
 
@@ -75,9 +75,12 @@ Branch: `phase/4-text-and-website-streaming` · PR: not yet opened
 
 ## Phase 5 — Image
 
-- [ ] `generateImage` through the adapter registry
-- [ ] Blob upload and `GenerationEvent` stream
-- [ ] Gallery rendering
+- [x] `generateImage` through the adapter registry — `src/server/adapters/index.ts`
+- [x] Blob upload through the `StorageAdapter` — Upstash Blob SDK
+- [x] `GenerationEvent` SSE stream — `src/lib/generation/events.ts`
+- [x] `generations` row per run, `GET /api/generations` history
+- [x] Gallery rendering — cards, lightbox, copy prompt, download
+- [x] ADR-0011 — media generation streams its lifecycle over SSE
 
 ## Phase 6 — Video and music
 
@@ -116,6 +119,16 @@ Branch: `phase/4-text-and-website-streaming` · PR: not yet opened
 - `@ai-sdk/openai-compatible` exposes no video model factory — video needs a
   dedicated adapter (fal / Replicate / Google).
 - `useChat` with `DefaultChatTransport` is chosen and adopted for all streaming in Phase 4 (ADR-0005).
+- Media categories do **not** use the AI SDK data stream. They answer with a
+  `text/event-stream` of `GenerationEvent`s (`event: <type>` / `data: <json>`).
+  See ADR-0005 and ADR-0011.
+- `@upstash/blob@0.0.11` is the SDK behind the `StorageAdapter`. Its `Bucket`
+  validates the token format eagerly, so the adapter builds the bucket lazily.
+  The env var is `UPSTASH_BLOB_TOKEN` (not Vercel Blob's
+  `BLOB_READ_WRITE_TOKEN`). A private bucket has no public URL — the adapter
+  throws rather than storing an empty `outputUrl`.
+- The AI SDK image model interface in `ai@7.0.145` is `ImageModelV2`; a v3 or v4
+  mock needs a `response` field with `timestamp`, `modelId` and `headers`.
 - There is no AI SDK music API. Songs need a fal.ai or Replicate queue adapter.
 - For the website allowlist, match the catalogue's real `family` tokens
   (`claude-sonnet`, `gpt-codex`, `qwen3.5`, …), not model-id substrings.
