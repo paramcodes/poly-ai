@@ -23,7 +23,7 @@ import { chromium } from "@playwright/test";
 
 const run = promisify(execFile);
 
-const PHASE = process.env.EVIDENCE_PHASE ?? "4";
+const PHASE = process.env.EVIDENCE_PHASE ?? "5";
 const BASE_URL = process.env.EVIDENCE_BASE_URL ?? "http://127.0.0.1:3000";
 const OUT_DIR = path.resolve(
 	process.cwd(),
@@ -571,6 +571,133 @@ async function main() {
 			await codeTab.click();
 			await page.waitForTimeout(400);
 			await shoot("website-code");
+		}
+	} else if (PHASE === "5") {
+		const urlObj = new URL(BASE_URL);
+
+		// Mock the assigned image model
+		await page.route("**/api/models*", async (route) => {
+			if (route.request().method() === "GET") {
+				await route.fulfill({
+					status: 200,
+					contentType: "application/json",
+					body: JSON.stringify({
+						models: [
+							{
+								id: "image-model-1",
+								modelId: "gpt-image-1",
+								name: "GPT Image 1",
+								providerId: "openai-provider",
+								providerName: "OpenAI",
+								providerStatus: "active",
+								category: "image",
+								enabled: "true",
+								capabilities: ["image"],
+							},
+						],
+					}),
+				});
+			} else {
+				await route.continue();
+			}
+		});
+
+		// Mock auth session
+		await page.route("**/api/auth/**", async (route) => {
+			await route.fulfill({
+				status: 200,
+				headers: {
+					"access-control-allow-origin": "http://127.0.0.1:3000",
+					"access-control-allow-credentials": "true",
+					"content-type": "application/json",
+				},
+				body: JSON.stringify({
+					session: {
+						id: "mock-session-id",
+						userId: "mock-user-id",
+						expiresAt: new Date(Date.now() + 86400000).toISOString(),
+					},
+					user: {
+						id: "mock-user-id",
+						name: "Demo User",
+						email: "demo@poly-ai.app",
+					},
+				}),
+			});
+		});
+
+		// Mock the image history endpoint
+		await page.route("**/api/generations?category=image*", async (route) => {
+			await route.fulfill({
+				status: 200,
+				contentType: "application/json",
+				body: JSON.stringify({
+					generations: [
+						{
+							id: "gen-evidence-1",
+							userId: "mock-user-id",
+							category: "image",
+							providerId: "openai-provider",
+							modelId: "gpt-image-1",
+							prompt:
+								"A serene mountain lake at sunrise with photorealistic mist",
+							status: "succeeded",
+							outputUrl: `${BASE_URL}/mock-evidence-image.png`,
+							createdAt: new Date().toISOString(),
+						},
+						{
+							id: "gen-evidence-2",
+							userId: "mock-user-id",
+							category: "image",
+							providerId: "openai-provider",
+							modelId: "gpt-image-1",
+							prompt: "A neon city skyline at night in the rain",
+							status: "succeeded",
+							outputUrl: `${BASE_URL}/mock-evidence-image.png`,
+							createdAt: new Date().toISOString(),
+						},
+					],
+				}),
+			});
+		});
+
+		// Serve a placeholder pixel for the mocked gallery images
+		await page.route("**/mock-evidence-image.png", async (route) => {
+			await route.fulfill({
+				status: 200,
+				contentType: "image/png",
+				body: Buffer.from(
+					"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+					"base64",
+				),
+			});
+		});
+
+		// Add session cookie to access /app routes
+		await context.addCookies([
+			{
+				name: "better-auth.session_token",
+				value: "mock-session-token-evidence",
+				domain: urlObj.hostname,
+				path: "/",
+				httpOnly: true,
+				sameSite: "Lax",
+			},
+		]);
+
+		// 1. Visit /app/image and capture the workspace with its gallery
+		await page.goto(`${BASE_URL}/app/image`, { waitUntil: "networkidle" });
+		await page.waitForTimeout(800);
+		await shoot("image-workspace");
+
+		// 2. Fill the prompt and capture the form state
+		const imagePrompt = page.locator("#image-prompt");
+		if (await imagePrompt.count()) {
+			await imagePrompt.fill(
+				"A glass city floating above the clouds at golden hour, cinematic lighting",
+			);
+			await page.waitForTimeout(300);
+			await shoot("image-prompt-filled");
 		}
 	}
 	const video = page.video();
