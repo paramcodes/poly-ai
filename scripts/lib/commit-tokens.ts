@@ -78,11 +78,13 @@ export function git(args: string[]): string | null {
 }
 
 /**
- * Return the list of files staged for commit, in the form `git diff --cached
+ * Return the list of files changed in a diff, in the form `git diff
  * --name-status` reports them.
  */
-export function stagedFiles(): { path: string; status: string }[] {
-	const out = git(["diff", "--cached", "--name-status", "--no-renames"]);
+export function diffFiles(
+	diffArgs: string[] = ["--cached"],
+): { path: string; status: string }[] {
+	const out = git(["diff", ...diffArgs, "--name-status", "--no-renames"]);
 	if (!out) return [];
 	return out
 		.split("\n")
@@ -96,14 +98,24 @@ export function stagedFiles(): { path: string; status: string }[] {
 }
 
 /**
- * Count the tokens contributed by the added lines of the staged diff, per file.
+ * Return the list of files staged for commit, in the form `git diff --cached
+ * --name-status` reports them.
+ */
+export function stagedFiles(): { path: string; status: string }[] {
+	return diffFiles(["--cached"]);
+}
+
+/**
+ * Count the tokens contributed by the added lines of any git diff, per file.
  *
  * Binary files are detected from `--numstat`, which reports `-` for both
  * columns when a file is binary. They are charged {@link BINARY_FILE_PENALTY}.
  */
-export function countStagedTokens(): DiffTokenReport {
+export function countDiffTokens(
+	diffArgs: string[] = ["--cached"],
+): DiffTokenReport {
 	const limit = resolveLimit();
-	const numstat = git(["diff", "--cached", "--numstat", "--no-renames"]) ?? "";
+	const numstat = git(["diff", ...diffArgs, "--numstat", "--no-renames"]) ?? "";
 	const binaryPaths = new Set<string>();
 
 	for (const line of numstat.split("\n")) {
@@ -119,7 +131,7 @@ export function countStagedTokens(): DiffTokenReport {
 	const patch =
 		git([
 			"diff",
-			"--cached",
+			...diffArgs,
 			"--no-color",
 			"--no-ext-diff",
 			"--no-renames",
@@ -152,10 +164,10 @@ export function countStagedTokens(): DiffTokenReport {
 		}
 	}
 
-	const staged = stagedFiles();
+	const touched = diffFiles(diffArgs);
 	const files: FileTokenCount[] = [];
 
-	for (const entry of staged) {
+	for (const entry of touched) {
 		const { path } = entry;
 		const binary = binaryPaths.has(path);
 		const exempt = isExempt(path);
@@ -171,6 +183,32 @@ export function countStagedTokens(): DiffTokenReport {
 	const ungatedTotal = files.reduce((sum, file) => sum + file.tokens, 0);
 
 	return { files, total, limit, ungatedTotal };
+}
+
+/**
+ * Count the tokens contributed by the added lines of the staged diff, per file.
+ */
+export function countStagedTokens(): DiffTokenReport {
+	return countDiffTokens(["--cached"]);
+}
+
+/**
+ * Count the tokens contributed by a single commit.
+ */
+export function countCommitTokens(sha: string): DiffTokenReport {
+	return countDiffTokens([`${sha}~1`, sha]);
+}
+
+/**
+ * Return all commit SHAs on the branch between base and head.
+ */
+export function getBranchCommits(base: string, head = "HEAD"): string[] {
+	const out = git(["rev-list", "--reverse", `${base}..${head}`]);
+	if (!out) return [];
+	return out
+		.split("\n")
+		.map((s) => s.trim())
+		.filter(Boolean);
 }
 
 /** Render a human-readable report for the terminal. */
