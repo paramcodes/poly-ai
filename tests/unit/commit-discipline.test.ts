@@ -27,9 +27,12 @@ describe("commit token helpers", () => {
 		expect(BINARY_FILE_PENALTY).toBe(2000);
 	});
 
-	it("exempts the lockfile and committed evidence", () => {
+	it("exempts the lockfile, committed evidence, and models.dev snapshot", () => {
 		expect(isExempt("pnpm-lock.yaml")).toBe(true);
 		expect(isExempt("docs/evidence/phase-0/sidebar.png")).toBe(true);
+		expect(isExempt("src/server/catalogue/models.dev.snapshot.json")).toBe(
+			true,
+		);
 	});
 
 	it("does not exempt ordinary source files", () => {

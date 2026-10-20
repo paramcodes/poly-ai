@@ -16,7 +16,8 @@
 			"!docs/evidence",
 			"!drizzle",
 			"!test-results",
-			"!playwright-report"
+			"!playwright-report",
+			"!src/server/catalogue/models.dev.snapshot.json"
 		]
 	},
 	"formatter": {
