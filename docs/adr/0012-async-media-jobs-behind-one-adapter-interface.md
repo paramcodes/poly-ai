@@ -7,10 +7,10 @@
 ## Context
 
 ADR-0006 decided that video and music are asynchronous provider jobs tracked by a row in
-`generations`, and ADR-0010 decided that the client polls our own endpoint to observe them.
-Both decisions assume there is a way to hand a job to a provider and later ask the provider
-what became of it, but neither says what that interface looks like. Phase 6 has to answer
-that for two vendors, and the answer has to survive a third.
+`generations`, and ADR-0010 decided that the client polls our own endpoint to observe
+them. Both decisions assume there is a way to hand a job to a provider and later ask the
+provider what became of it, but neither says what that interface looks like. Phase 6 has
+to answer that for two vendors, and the answer has to survive a third.
 
 The OpenAI-compatible path that covers most of the provider long tail (ADR-0003) cannot
 serve these categories. The installed `@ai-sdk/openai-compatible@2.0.85` ships

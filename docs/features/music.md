@@ -47,9 +47,9 @@ it in the history.
    placeholder becomes "Enter the text to speak..." and the note beside the toggle reads
    "Text to speech, finished immediately".
 2. The user types the text to speak and presses Generate.
-3. The request goes to the speech flow: `POST /api/generate/speech` with
-   `{ text, providerId, modelId }`, or the same flow reached through the music route
-   when the request carries `mode: "voice"`.
+3. The request goes to the speech flow: the workspace posts to `POST /api/generate/music`
+   with `mode: "voice"`, and the route runs the same code as `POST /api/generate/speech`
+   — the dedicated route that takes `{ text, providerId, modelId }` directly.
 4. The server runs `generateSpeech` from the AI SDK against a speech model obtained
    from `getSpeechModel` in `src/server/adapters/speech.ts`, uploads the audio to blob
    storage under `generations/${userId}/${generationId}.mp3` with the content type
@@ -74,10 +74,14 @@ mode is local to this component — it is a choice about the next request, not a
 of a generation, and nothing in the history is filtered by it.
 
 `src/components/app/media-history.tsx` holds the shared history list and the shared
-polling hook, and is the same component the video category uses; for the `music`
-category each card renders an `<audio controls>` player. The `useMediaJob` hook
-exported from the same file owns the polling loop; only the Song mode uses it, because
-the Voice mode never produces a running job.
+polling hook, and is the same component the video category uses. `MediaHistory` takes
+the props of `MediaHistoryProps` — `category`, `generations`, `loading`, `onRefresh`,
+`onRetry` and `emptyModelName` — and the rows it renders are `MediaGenerationRecord`
+values. For the `music` category each card renders an `<audio controls>` player and
+shows the prompt, the model id, a status badge, a copy-prompt button and a download
+button, plus the error text in red and a Retry button for a `failed` row. The
+`useMediaJob` hook exported from the same file owns the polling loop; only the Song mode
+uses it, because the Voice mode never produces a running job.
 
 ## Routes and the data they move
 
@@ -95,12 +99,13 @@ request is unauthenticated, `400` with the message "Invalid request: prompt, pro
 and modelId are required" when the body is invalid, `404` when the provider or the
 model assignment is not found for this user, `403` when the assignment is disabled, and
 `500` otherwise. In Song mode it answers `202` with `{ generation }`, the row as it
-stands after the job was submitted. In Voice mode it answers with the finished row the
-speech flow produced.
+stands after the job was submitted. In Voice mode it answers `202` with the finished
+row the speech flow produced.
 
 `POST /api/generate/speech` takes `{ text, providerId, modelId }` and answers `200` with
 `{ generation }`. The row it returns is already `succeeded` and already carries the
-storage URL, so a client that receives it has nothing left to poll.
+storage URL, so a client that receives it has nothing left to poll. Its invalid-body
+message is "Invalid request: text, providerId, and modelId are required".
 
 `GET /api/generations/:id` is a route the whole app shares. For a row whose category is
 `video` or `music` and whose status is `queued` or `running`, it refreshes the job
@@ -164,8 +169,9 @@ the retry behaves like a generation the user started by hand.
 
 A submission that never becomes a job — an unknown provider, a disabled assignment, a
 network error — is a failed response from `POST /api/generate/music`, and the workspace
-toasts its `error` field. A speech call that fails throws out of `generateSpeech` and
-surfaces the same way.
+toasts its `error` field. The row that was already inserted is marked `failed` with the
+same message, so it appears in the history rather than disappearing. A speech call that
+fails throws out of `generateSpeech` and surfaces the same way.
 
 A provider key that starts with `mock-` or `sk-test-`, or is `valid-key`, never reaches
 the network. The mock job adapter answers immediately with a tiny placeholder track, and
@@ -200,6 +206,12 @@ The provider owns the work; the client only watches.
 **The music category in Voice mode** is shorter than either of those. The audio comes
 back in the request and the row is finished before the response is sent, so the voice
 path is a synchronous generation that happens to live in the music category.
+
+None of the three uses the AI SDK data stream. Text and website stream tokens through
+`useChat`; the media categories do not, because a media provider produces a status
+lifecycle with an artefact at the end of it rather than a token sequence. Voice is the
+exception within the media categories in the other direction: it uses the AI SDK's
+`generateSpeech`, but it is a single synchronous call rather than a stream.
 
 The practical differences follow from this. The image category needs its tab open for
 as long as the request takes, which is seconds. A song needs its tab open for as long as

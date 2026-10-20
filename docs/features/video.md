@@ -144,7 +144,9 @@ started by hand.
 
 A submission that never becomes a job — an unknown provider, a disabled assignment, a
 network error while submitting — is a failed response from `POST /api/generate/video`.
-The workspace reads the `error` field of the response body and toasts it.
+The workspace reads the `error` field of the response body and toasts it. The row that
+was already inserted is marked `failed` with the same message, so it appears in the
+history rather than disappearing.
 
 A provider key that starts with `mock-` or `sk-test-`, or is `valid-key`, never reaches
 the network. The mock adapter answers immediately with a tiny placeholder clip, so the
