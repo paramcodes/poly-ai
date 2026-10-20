@@ -6,7 +6,7 @@
 ## Current phase
 
 **Phase 6 — Video and music** · status: complete
-Branch: `phase/6-video-and-music` · PR: not yet opened
+Branch: `phase/6-video-and-music` · PR: #4
 
 ## Legend
 
