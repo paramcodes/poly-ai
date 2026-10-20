@@ -2,6 +2,7 @@
  * StorageAdapter interface and implementations for Poly-AI Phase 5.
  * See ADR-0009 (Vercel deployment and blob storage behind StorageAdapter).
  */
+import { Bucket } from "@upstash/blob";
 
 export interface StorageAdapter {
 	upload(options: {
@@ -9,8 +10,8 @@ export interface StorageAdapter {
 		body: Buffer | Uint8Array;
 		contentType?: string;
 	}): Promise<{ url: string; pathname: string }>;
-	delete(url: string): Promise<void>;
-	getUrl(pathname: string): string;
+	delete(pathname: string): Promise<void>;
+	getUrl(pathname: string): Promise<string | undefined>;
 }
 
 export interface MemoryStorageAdapterOptions {
@@ -69,26 +70,11 @@ export class MemoryStorageAdapter implements StorageAdapter {
 		};
 	}
 
-	async delete(urlOrPathname: string): Promise<void> {
-		const cleanPath = urlOrPathname.replace(/^\/+/, "");
-		if (this.store.has(cleanPath)) {
-			this.store.delete(cleanPath);
-			return;
-		}
-
-		// Also match by stored URL or constructed base URL
-		for (const [key, value] of this.store.entries()) {
-			if (
-				value.url === urlOrPathname ||
-				`${this.baseUrl}/${key}` === urlOrPathname
-			) {
-				this.store.delete(key);
-				return;
-			}
-		}
+	async delete(pathname: string): Promise<void> {
+		this.store.delete(pathname.replace(/^\/+/, ""));
 	}
 
-	getUrl(pathname: string): string {
+	async getUrl(pathname: string): Promise<string | undefined> {
 		if (
 			pathname.startsWith("http://") ||
 			pathname.startsWith("https://") ||
@@ -97,11 +83,7 @@ export class MemoryStorageAdapter implements StorageAdapter {
 			return pathname;
 		}
 		const cleanPath = pathname.replace(/^\/+/, "");
-		const existing = this.store.get(cleanPath);
-		if (existing) {
-			return existing.url;
-		}
-		return `${this.baseUrl}/${cleanPath}`;
+		return this.store.get(cleanPath)?.url ?? `${this.baseUrl}/${cleanPath}`;
 	}
 
 	get(pathname: string): StoredMemoryItem | undefined {
@@ -121,34 +103,42 @@ export class MemoryStorageAdapter implements StorageAdapter {
 	}
 }
 
-export interface BlobStorageAdapterOptions {
+export interface UpstashBlobStorageAdapterOptions {
+	/** Pre-built bucket, for tests. */
+	bucket?: Bucket;
+	/** REST token. Defaults to `UPSTASH_BLOB_TOKEN`. */
 	token?: string;
-	apiBaseUrl?: string;
-	fetch?: typeof fetch;
 }
 
 /**
- * Remote blob storage adapter communicating via HTTP with Vercel Blob / Upstash Blob.
+ * Blob storage adapter backed by Upstash Blob.
+ *
+ * This is the only module that imports the Upstash Blob SDK, so swapping the
+ * store for Cloudflare R2 is a change to this file alone (ADR-0009).
  */
-export class BlobStorageAdapter implements StorageAdapter {
+export class UpstashBlobStorageAdapter implements StorageAdapter {
+	private readonly bucket: Bucket | null;
 	private readonly token: string;
-	private readonly apiBaseUrl: string;
-	private readonly customFetch: typeof fetch;
 
-	constructor(options?: BlobStorageAdapterOptions) {
-		const token = options?.token ?? process.env.BLOB_READ_WRITE_TOKEN;
-		if (!token || token.trim().length === 0) {
+	constructor(options?: UpstashBlobStorageAdapterOptions) {
+		this.bucket = options?.bucket ?? null;
+		this.token = options?.token ?? process.env.UPSTASH_BLOB_TOKEN ?? "";
+	}
+
+	/**
+	 * Built on first use: the SDK validates the token format eagerly, and a
+	 * malformed token should fail the upload, not the process start.
+	 */
+	private get client(): Bucket {
+		if (this.bucket) {
+			return this.bucket;
+		}
+		if (!this.token) {
 			throw new Error(
-				"BLOB_READ_WRITE_TOKEN is required for BlobStorageAdapter",
+				"UPSTASH_BLOB_TOKEN is required for UpstashBlobStorageAdapter",
 			);
 		}
-		this.token = token.trim();
-		this.customFetch = options?.fetch ?? fetch;
-		this.apiBaseUrl = (
-			options?.apiBaseUrl ??
-			process.env.BLOB_API_URL ??
-			"https://blob.vercel-storage.com"
-		).replace(/\/+$/, "");
+		return new Bucket({ token: this.token });
 	}
 
 	async upload(options: {
@@ -157,76 +147,30 @@ export class BlobStorageAdapter implements StorageAdapter {
 		contentType?: string;
 	}): Promise<{ url: string; pathname: string }> {
 		const cleanPath = options.pathname.replace(/^\/+/, "");
-		const targetUrl = `${this.apiBaseUrl}/${cleanPath}`;
+		const blob = await this.client.put(
+			cleanPath,
+			new Uint8Array(options.body),
+			options.contentType ? { contentType: options.contentType } : undefined,
+		);
 
-		const headers: Record<string, string> = {
-			Authorization: `Bearer ${this.token}`,
-			"x-api-version": "7",
-		};
-		if (options.contentType) {
-			headers["Content-Type"] = options.contentType;
-		}
-
-		const response = await this.customFetch(targetUrl, {
-			method: "PUT",
-			headers,
-			body: options.body as unknown as BodyInit,
-		});
-
-		if (!response.ok) {
-			const errText = await response.text().catch(() => "");
+		const url = blob.url ?? (await this.client.publicUrl(cleanPath));
+		if (!url) {
 			throw new Error(
-				`Blob storage upload failed (${response.status}): ${errText || response.statusText}`,
+				`Upstash bucket is private; ${cleanPath} has no public URL. Use a public bucket or a signed URL.`,
 			);
 		}
 
-		const data = (await response.json()) as { url?: string; pathname?: string };
-		return {
-			url: data.url ?? targetUrl,
-			pathname: data.pathname ?? cleanPath,
-		};
+		return { url, pathname: blob.path ?? cleanPath };
 	}
 
-	async delete(urlOrPathname: string): Promise<void> {
-		const targetUrl = `${this.apiBaseUrl}/delete`;
-		const fullUrl =
-			urlOrPathname.startsWith("http://") ||
-			urlOrPathname.startsWith("https://")
-				? urlOrPathname
-				: this.getUrl(urlOrPathname);
-
-		const response = await this.customFetch(targetUrl, {
-			method: "POST",
-			headers: {
-				Authorization: `Bearer ${this.token}`,
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify({ urls: [fullUrl] }),
-		});
-
-		if (!response.ok && response.status !== 404) {
-			const errText = await response.text().catch(() => "");
-			throw new Error(
-				`Blob storage delete failed (${response.status}): ${errText || response.statusText}`,
-			);
-		}
+	async delete(pathname: string): Promise<void> {
+		await this.client.del(pathname.replace(/^\/+/, ""));
 	}
 
-	getUrl(pathname: string): string {
-		if (
-			pathname.startsWith("http://") ||
-			pathname.startsWith("https://") ||
-			pathname.startsWith("data:")
-		) {
-			return pathname;
-		}
-		const cleanPath = pathname.replace(/^\/+/, "");
-		return `${this.apiBaseUrl}/${cleanPath}`;
+	async getUrl(pathname: string): Promise<string | undefined> {
+		return this.client.publicUrl(pathname.replace(/^\/+/, ""));
 	}
 }
-
-/** Alias for UpstashBlobStorageAdapter as referenced in architectural documents */
-export { BlobStorageAdapter as UpstashBlobStorageAdapter };
 
 let defaultAdapter: StorageAdapter | null = null;
 let testingAdapter: StorageAdapter | null = null;
@@ -246,12 +190,10 @@ export function getStorageAdapter(override?: StorageAdapter): StorageAdapter {
 		return testingAdapter;
 	}
 	if (!defaultAdapter) {
-		const token = process.env.BLOB_READ_WRITE_TOKEN?.trim();
-		if (token) {
-			defaultAdapter = new BlobStorageAdapter({ token });
-		} else {
-			defaultAdapter = new MemoryStorageAdapter();
-		}
+		const token = process.env.UPSTASH_BLOB_TOKEN?.trim();
+		defaultAdapter = token
+			? new UpstashBlobStorageAdapter({ token })
+			: new MemoryStorageAdapter();
 	}
 	return defaultAdapter;
 }

@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-	BlobStorageAdapter,
 	getStorageAdapter,
 	MemoryStorageAdapter,
 	setStorageAdapterForTesting,
+	UpstashBlobStorageAdapter,
 } from "../../src/server/storage";
 
 describe("StorageAdapter implementations", () => {
@@ -38,7 +38,7 @@ describe("StorageAdapter implementations", () => {
 			);
 			expect(adapter.has("generations/gen-1.png")).toBe(true);
 
-			await adapter.delete(result.url);
+			await adapter.delete("generations/gen-1.png");
 			expect(adapter.has("generations/gen-1.png")).toBe(false);
 		});
 
@@ -56,57 +56,75 @@ describe("StorageAdapter implementations", () => {
 			expect(result.url).toBe(
 				"https://custom.storage.local/media/images/cat.jpg",
 			);
-			expect(adapter.getUrl("images/cat.jpg")).toBe(
+			expect(await adapter.getUrl("images/cat.jpg")).toBe(
 				"https://custom.storage.local/media/images/cat.jpg",
 			);
 		});
 	});
 
-	describe("BlobStorageAdapter", () => {
-		it("uploads using bearer token when BLOB_READ_WRITE_TOKEN is set", async () => {
-			const mockFetch = vi.fn().mockResolvedValue({
-				ok: true,
-				json: async () => ({
-					url: "https://blob.vercel-storage.com/image-123.png",
-					pathname: "images/image-123.png",
-				}),
+	describe("UpstashBlobStorageAdapter", () => {
+		it("uploads through the bucket and returns its public url", async () => {
+			const put = vi.fn().mockResolvedValue({
+				path: "generations/gen-2.png",
+				url: "https://store.upstash.io/generations/gen-2.png",
+				size: 4,
+				etag: "abc",
+				uploadedAt: new Date(),
+				contentType: "image/png",
 			});
+			const bucket = {
+				put,
+				del: vi.fn().mockResolvedValue(undefined),
+				publicUrl: vi.fn().mockResolvedValue(undefined),
+			};
 
-			const adapter = new BlobStorageAdapter({
-				token: "vercel_blob_rw_test_token_123",
-				fetch: mockFetch as unknown as typeof fetch,
+			const adapter = new UpstashBlobStorageAdapter({
+				bucket: bucket as never,
 			});
 
 			const result = await adapter.upload({
-				pathname: "images/image-123.png",
-				body: Buffer.from("bytes"),
+				pathname: "/generations/gen-2.png",
+				body: Buffer.from("png!"),
 				contentType: "image/png",
 			});
 
-			expect(result.url).toBe("https://blob.vercel-storage.com/image-123.png");
-			expect(mockFetch).toHaveBeenCalledWith(
-				expect.stringContaining("image-123.png"),
-				expect.objectContaining({
-					method: "PUT",
-					headers: expect.objectContaining({
-						Authorization: "Bearer vercel_blob_rw_test_token_123",
-					}),
-				}),
+			expect(result).toEqual({
+				url: "https://store.upstash.io/generations/gen-2.png",
+				pathname: "generations/gen-2.png",
+			});
+			expect(put).toHaveBeenCalledWith(
+				"generations/gen-2.png",
+				expect.any(Uint8Array),
+				{ contentType: "image/png" },
 			);
+		});
+
+		it("throws when the bucket is private and exposes no public url", async () => {
+			const bucket = {
+				put: vi.fn().mockResolvedValue({ path: "a.png" }),
+				del: vi.fn(),
+				publicUrl: vi.fn().mockResolvedValue(undefined),
+			};
+
+			const adapter = new UpstashBlobStorageAdapter({
+				bucket: bucket as never,
+			});
+
+			await expect(
+				adapter.upload({ pathname: "a.png", body: Buffer.from("x") }),
+			).rejects.toThrow(/private/);
 		});
 	});
 
 	describe("getStorageAdapter singleton resolution", () => {
-		it("resolves to MemoryStorageAdapter in absence of BLOB_READ_WRITE_TOKEN", () => {
-			delete process.env.BLOB_READ_WRITE_TOKEN;
-			const adapter = getStorageAdapter();
-			expect(adapter).toBeInstanceOf(MemoryStorageAdapter);
+		it("resolves to MemoryStorageAdapter without an Upstash token", () => {
+			delete process.env.UPSTASH_BLOB_TOKEN;
+			expect(getStorageAdapter()).toBeInstanceOf(MemoryStorageAdapter);
 		});
 
-		it("resolves to BlobStorageAdapter when token is present", () => {
-			process.env.BLOB_READ_WRITE_TOKEN = "test-token";
-			const adapter = getStorageAdapter();
-			expect(adapter).toBeInstanceOf(BlobStorageAdapter);
+		it("resolves to UpstashBlobStorageAdapter when the token is present", () => {
+			process.env.UPSTASH_BLOB_TOKEN = "test-token";
+			expect(getStorageAdapter()).toBeInstanceOf(UpstashBlobStorageAdapter);
 		});
 	});
 });

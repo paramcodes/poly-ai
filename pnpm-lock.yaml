@@ -193,6 +193,9 @@ importers:
       '@types/pg':
         specifier: ^8.23.1
         version: 8.23.1
+      '@upstash/blob':
+        specifier: ^0.0.11
+        version: 0.0.11(react@19.3.0)
       ai:
         specifier: ^7.0.145
         version: 7.0.145(zod@4.6.7)
@@ -2557,6 +2560,15 @@ packages:
 
   '@types/validate-npm-package-name@4.0.2':
     resolution: {integrity: sha512-lrpDziQipxCEeK5kWxvljWYhUvOiB2A9izZd9B2AFarYAkqZshb4lPbRs7zKEic6eGtH8V/2qJW+dPp9OtF6bw==}
+
+  '@upstash/blob@0.0.11':
+    resolution: {integrity: sha512-UHudxISoPLqMchQ9HyOK7yJcFqsIgOShkdDvZ/1yL5UlDz88LPORSFYJ4BA7HPvfI3PcSjRrXdyVs6LDKiZgjg==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      react: '>=18'
+    peerDependenciesMeta:
+      react:
+        optional: true
 
   '@vercel/oidc@3.2.0':
     resolution: {integrity: sha512-UycprH3T6n3jH0k44NHMa7pnFHGu/N05MjojYr+Mc6I7obkoLIJujSWwin1pCvdy/eOxrI/l3uDLQsmcrOb4ug==}
@@ -6833,6 +6845,10 @@ snapshots:
       csstype: 3.2.3
 
   '@types/validate-npm-package-name@4.0.2': {}
+
+  '@upstash/blob@0.0.11(react@19.3.0)':
+    optionalDependencies:
+      react: 19.3.0
 
   '@vercel/oidc@3.2.0': {}
 
