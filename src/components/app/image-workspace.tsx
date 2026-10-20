@@ -182,7 +182,7 @@ export function ImageWorkspace({
 					>
 						{generating ? (
 							<>
-								<Loader2 className="size-4 mr-2 animate-spin" />
+								<Loader2 className="size-4 mr-2 animate-spin motion-reduce:animate-none" />
 								Generating...
 							</>
 						) : (
@@ -202,7 +202,7 @@ export function ImageWorkspace({
 				>
 					<div className="flex items-center justify-between text-sm">
 						<span className="font-medium flex items-center gap-2">
-							<Loader2 className="size-4 animate-spin text-primary" />
+							<Loader2 className="size-4 animate-spin motion-reduce:animate-none text-primary" />
 							{progressStage || "Generating image..."}
 						</span>
 						<span className="text-xs text-muted-foreground">
@@ -211,7 +211,7 @@ export function ImageWorkspace({
 					</div>
 					<div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
 						<div
-							className="bg-primary h-full transition-all duration-300"
+							className="bg-primary h-full transition-all duration-300 motion-reduce:transition-none"
 							style={{ width: `${progressPercent}%` }}
 						/>
 					</div>

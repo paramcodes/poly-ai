@@ -211,8 +211,8 @@ export function ProvidersSettingsView() {
 				<CardContent>
 					{loading ? (
 						<div className="flex items-center justify-center p-8 text-muted-foreground">
-							<Loader2 className="size-6 animate-spin mr-2" /> Loading
-							providers...
+							<Loader2 className="size-6 animate-spin motion-reduce:animate-none mr-2" />{" "}
+							Loading providers...
 						</div>
 					) : providers.length === 0 ? (
 						<div className="flex flex-col items-center justify-center p-8 text-center border border-dashed rounded-lg">

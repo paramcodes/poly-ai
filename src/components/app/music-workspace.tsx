@@ -217,7 +217,7 @@ export function MusicWorkspace({ selectedModel }: MusicWorkspaceProps) {
 					>
 						{busy ? (
 							<>
-								<Loader2 className="size-4 mr-2 animate-spin" />
+								<Loader2 className="size-4 mr-2 animate-spin motion-reduce:animate-none" />
 								Generating...
 							</>
 						) : (
@@ -236,7 +236,7 @@ export function MusicWorkspace({ selectedModel }: MusicWorkspaceProps) {
 					data-slot="generating-card"
 				>
 					<div className="flex items-center gap-2 text-sm font-medium">
-						<Loader2 className="size-4 animate-spin text-primary" />
+						<Loader2 className="size-4 animate-spin motion-reduce:animate-none text-primary" />
 						{stage ? STAGE_TEXT[stage] : "Waiting in the queue"}
 					</div>
 				</Card>

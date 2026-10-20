@@ -92,7 +92,7 @@ export function ImageGallery({
 					className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
 				>
 					<RefreshCw
-						className={`size-3.5 mr-1 ${loading ? "animate-spin" : ""}`}
+						className={`size-3.5 mr-1 ${loading ? "animate-spin motion-reduce:animate-none" : ""}`}
 					/>
 					Refresh
 				</Button>

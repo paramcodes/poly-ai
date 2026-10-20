@@ -86,7 +86,9 @@ export function ProvidersTable({
 							>
 								<RefreshCw
 									className={`size-3.5 ${
-										verifyingId === p.id ? "animate-spin" : ""
+										verifyingId === p.id
+											? "animate-spin motion-reduce:animate-none"
+											: ""
 									}`}
 								/>
 							</Button>
