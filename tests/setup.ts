@@ -14,4 +14,14 @@ if (typeof window !== "undefined") {
 			dispatchEvent: () => false,
 		}),
 	});
+
+	class MockResizeObserver {
+		observe() {}
+		unobserve() {}
+		disconnect() {}
+	}
+	window.ResizeObserver =
+		MockResizeObserver as unknown as typeof ResizeObserver;
+	global.ResizeObserver =
+		MockResizeObserver as unknown as typeof ResizeObserver;
 }
